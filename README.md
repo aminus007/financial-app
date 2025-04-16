@@ -1,116 +1,110 @@
-# Personal Finance Management Web App
+# Personal Finance Manager
 
-A comprehensive personal finance management application that helps users track their income, expenses, and budgets effectively.
+A comprehensive web application for managing personal finances, built with React, Node.js, and MongoDB.
 
 ## Features
 
-- 🔐 User Authentication (Sign up, Login, Password Reset)
-- 📊 Dashboard with Financial Overview
-- 💰 Income & Expense Tracking
-- 📈 Budget Management
-- 📊 Reports and Analytics
-- 💳 Multiple Account Management
-- 🌙 Dark Mode Support
-- 📱 Responsive Design
+- User Authentication (Sign up, Login, Password Reset)
+- Dashboard with Financial Overview
+- Income & Expense Tracking
+- Budget Management
+- Financial Reports & Analytics
+- Account Management
+- Dark Mode Support
+- Responsive Design
 
 ## Tech Stack
 
-- Frontend: React.js with Tailwind CSS
-- Backend: Node.js with Express
-- Database: MongoDB
-- Authentication: JWT
-- Charts: Chart.js
-- Date Handling: date-fns
+- **Frontend**: React.js with TypeScript
+- **Styling**: Tailwind CSS
+- **Backend**: Node.js + Express
+- **Database**: MongoDB
+- **Authentication**: JWT + OAuth2
+- **Charting**: Chart.js
+- **PDF Generation**: PDFKit
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
-- MongoDB
+- MongoDB Atlas account
 - npm or yarn
 
 ## Setup Instructions
 
-### Backend Setup
-
-1. Navigate to the backend directory:
+1. Clone the repository:
 ```bash
-cd backend
+git clone https://github.com/yourusername/personal-finance-manager.git
+cd personal-finance-manager
 ```
 
 2. Install dependencies:
 ```bash
 npm install
+cd client
+npm install
+cd ..
 ```
 
-3. Create a `.env` file in the backend directory with the following variables:
-```
-PORT=5000
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-```
+3. Configure environment variables:
+- Copy `.env.example` to `.env`
+- Update the values in `.env` with your configuration
 
 4. Start the development server:
 ```bash
+# Start backend only
 npm run dev
-```
 
-### Frontend Setup
+# Start frontend only
+npm run client
 
-1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file in the frontend directory with the following variables:
-```
-REACT_APP_API_URL=http://localhost:5000
-```
-
-4. Start the development server:
-```bash
-npm start
+# Start both frontend and backend
+npm run dev:full
 ```
 
 ## Project Structure
 
 ```
-finance-web-app/
-├── backend/
-│   ├── config/         # Configuration files
-│   ├── controllers/    # Route controllers
-│   ├── middleware/     # Custom middleware
-│   ├── models/         # Database models
-│   ├── routes/         # API routes
-│   ├── services/       # Business logic
-│   └── utils/          # Utility functions
-└── frontend/
-    ├── public/         # Static files
-    └── src/
-        ├── components/ # Reusable components
-        ├── pages/      # Page components
-        ├── context/    # React context
-        ├── hooks/      # Custom hooks
-        ├── services/   # API services
-        └── utils/      # Utility functions
+personal-finance-manager/
+├── client/                 # React frontend
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── services/
+│       └── utils/
+├── server/                 # Node.js backend
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   └── middleware/
+├── .env                    # Environment variables
+├── package.json
+└── README.md
 ```
 
 ## API Documentation
 
-The API documentation is available at `/api-docs` when running the backend server.
+The API documentation is available at `/api-docs` when running the server in development mode.
+
+## Testing
+
+Run tests using:
+```bash
+npm test
+```
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support, email support@example.com or open an issue in the repository. 
