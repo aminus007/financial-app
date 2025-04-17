@@ -18,6 +18,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { saveAs } from 'file-saver';
 
 ChartJS.register(
   CategoryScale,
@@ -185,11 +186,50 @@ export default function Reports() {
     },
   };
 
+  // CSV Export
+  function exportCSV() {
+    if (!filtered.length) return;
+    const replacer = (key: string, value: any) => (value === null ? '' : value);
+    const header = Object.keys(filtered[0]);
+    const csv = [
+      header.join(','),
+      ...filtered.map((row) =>
+        header.map((fieldName) => JSON.stringify(row[fieldName], replacer)).join(',')
+      ),
+    ].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `transactions-${Date.now()}.csv`);
+  }
+
+  // PDF Export
+  async function exportPDF() {
+    try {
+      const res = await fetch('/api/reports/export-pdf');
+      if (!res.ok) throw new Error('Failed to export PDF');
+      const blob = await res.blob();
+      saveAs(blob, `transactions-${Date.now()}.pdf`);
+    } catch (err) {
+      alert('Error exporting PDF');
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Reports & Analytics</h1>
         <div className="flex space-x-2">
+          <button
+            onClick={exportCSV}
+            className="rounded-md px-3 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            className="rounded-md px-3 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+          >
+            Export PDF
+          </button>
           {timeRanges.map((range) => (
             <button
               key={range.value}
