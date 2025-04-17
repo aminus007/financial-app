@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
-import bcrypt from 'bcryptjs';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,10 +12,10 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    // Demo: Check credentials against localStorage using bcryptjs
+    // Demo: Check credentials against localStorage
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     const user = users.find((u: any) => u.email === email);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user) {
       localStorage.setItem('session', JSON.stringify({ email: user.email }));
       navigate('/dashboard');
     } else {

@@ -6,7 +6,6 @@ import {
   LockClosedIcon,
   BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
-import bcrypt from 'bcryptjs';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -40,12 +39,11 @@ export default function Register() {
       setError('Email already registered');
       return;
     }
-    const hashedPassword = await bcrypt.hash(formData.password, 10);
     users.push({
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      password: hashedPassword,
+      password: formData.password,
       company: formData.company,
     });
     localStorage.setItem('users', JSON.stringify(users));
