@@ -1,92 +1,39 @@
 const mongoose = require('mongoose');
 
-const TransactionSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  accountId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Account',
-    required: true
+const transactionSchema = new mongoose.Schema({
+  amount: {
+    type: Number,
+    required: [true, 'Amount is required'],
   },
   type: {
     type: String,
-    enum: ['income', 'expense', 'transfer'],
-    required: true
-  },
-  amount: {
-    type: Number,
-    required: [true, 'Please provide an amount'],
-    min: [0, 'Amount must be positive']
+    required: [true, 'Type is required'],
+    enum: ['income', 'expense'],
   },
   category: {
     type: String,
-    required: [true, 'Please provide a category'],
-    enum: [
-      'salary',
-      'freelance',
-      'investment',
-      'other_income',
-      'food',
-      'transportation',
-      'housing',
-      'utilities',
-      'entertainment',
-      'shopping',
-      'healthcare',
-      'education',
-      'travel',
-      'other_expense'
-    ]
+    required: [true, 'Category is required'],
   },
-  description: {
+  note: {
     type: String,
-    trim: true
+    trim: true,
   },
   date: {
     type: Date,
     default: Date.now,
-    required: true
   },
-  isRecurring: {
-    type: Boolean,
-    default: false
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
-  recurringDetails: {
-    frequency: {
-      type: String,
-      enum: ['daily', 'weekly', 'monthly', 'yearly']
-    },
-    endDate: Date
-  },
-  transferDetails: {
-    fromAccount: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Account'
-    },
-    toAccount: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Account'
-    }
-  },
-  tags: [{
-    type: String,
-    trim: true
-  }],
-  attachments: [{
-    type: String // URLs to stored files
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+}, {
+  timestamps: true,
 });
 
-// Indexes for better query performance
-TransactionSchema.index({ userId: 1, date: -1 });
-TransactionSchema.index({ userId: 1, category: 1 });
-TransactionSchema.index({ userId: 1, accountId: 1 });
+// Add indexes for better query performance
+transactionSchema.index({ user: 1, date: -1 });
+transactionSchema.index({ user: 1, type: 1 });
+transactionSchema.index({ user: 1, category: 1 });
 
-module.exports = mongoose.model('Transaction', TransactionSchema); 
+module.exports = mongoose.model('Transaction', transactionSchema); 
