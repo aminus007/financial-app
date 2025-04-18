@@ -31,7 +31,7 @@ A full-stack personal finance management application built with React, Node.js, 
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/financial-app.git
+git clone https://github.com/aminus007/financial-app/financial-app.git
 cd financial-app
 ```
 
