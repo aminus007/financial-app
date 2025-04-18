@@ -11,6 +11,7 @@ const Settings = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -35,6 +36,32 @@ const Settings = () => {
       setError(err.message || 'Update failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/report/pdf', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to download PDF');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'MindfulMoney_Report.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || 'Failed to download PDF');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -92,6 +119,15 @@ const Settings = () => {
             {loading ? 'Saving...' : 'Save Preferences'}
           </button>
         </form>
+        <div className="mt-8 text-center">
+          <button
+            onClick={handleDownloadPDF}
+            className="btn btn-secondary"
+            disabled={downloading}
+          >
+            {downloading ? 'Generating PDF...' : 'Download PDF Report'}
+          </button>
+        </div>
       </div>
     </div>
   );
