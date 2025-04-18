@@ -31,14 +31,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    const { user, token } = await authApi.login(credentials);
+    const { user, token } = await authApi.login({ name: credentials.name });
     localStorage.setItem('token', token);
     setUser(user);
     return user;
   };
 
   const register = async (userData) => {
-    const { user, token } = await authApi.register(userData);
+    const { user, token } = await authApi.register({ name: userData.name });
     localStorage.setItem('token', token);
     setUser(user);
     return user;

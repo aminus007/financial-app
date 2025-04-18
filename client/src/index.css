@@ -28,4 +28,8 @@
   .card {
     @apply bg-white p-6 rounded-xl shadow-lg dark:bg-gray-800;
   }
+
+  .nav-link {
+    @apply text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 rounded;
+  }
 } 

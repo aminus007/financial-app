@@ -8,21 +8,22 @@ const router = express.Router();
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { name } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    let user = await User.findOne({ name });
+    if (user) {
+      // If user exists, log in as that user
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      return res.status(200).json({ user, token });
     }
 
     // Create new user
-    const user = new User({
-      email,
-      password,
-      name,
-    });
-
+    user = new User({ name });
     await user.save();
 
     // Generate token
@@ -41,17 +42,11 @@ router.post('/register', async (req, res) => {
 // Login user
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name } = req.body;
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ name });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -76,12 +71,11 @@ router.get('/me', auth, async (req, res) => {
 // Update user preferences
 router.patch('/preferences', auth, async (req, res) => {
   try {
-    const { currency, darkMode } = req.body;
+    const { currency } = req.body;
     
     req.user.preferences = {
       ...req.user.preferences,
       ...(currency && { currency }),
-      ...(darkMode !== undefined && { darkMode }),
     };
 
     await req.user.save();

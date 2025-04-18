@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/AuthContext';
@@ -11,6 +11,10 @@ import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import Budgets from './pages/Budgets';
 import Goals from './pages/Goals';
+import Recurring from './pages/Recurring';
+import Setup from './pages/Login';
+import Settings from './pages/Settings';
+import Landing from './pages/Landing';
 
 // Components
 import Navbar from './components/Navbar';
@@ -42,7 +46,7 @@ const PublicRoute = ({ children }) => {
   const { user } = useAuth();
 
   if (user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/dashboard" />;
   }
 
   return children;
@@ -51,9 +55,14 @@ const PublicRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={
+        <PublicRoute>
+          <Landing />
+        </PublicRoute>
+      } />
       <Route path="/login" element={
         <PublicRoute>
-          <Login />
+          <Setup />
         </PublicRoute>
       } />
       <Route path="/register" element={
@@ -61,7 +70,7 @@ const AppRoutes = () => {
           <Register />
         </PublicRoute>
       } />
-      <Route path="/" element={
+      <Route path="/dashboard" element={
         <PrivateRoute>
           <Dashboard />
         </PrivateRoute>
@@ -81,22 +90,40 @@ const AppRoutes = () => {
           <Goals />
         </PrivateRoute>
       } />
+      <Route path="/recurring" element={
+        <PrivateRoute>
+          <Recurring />
+        </PrivateRoute>
+      } />
+      <Route path="/settings" element={
+        <PrivateRoute>
+          <Settings />
+        </PrivateRoute>
+      } />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
+
+function AppLayout() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/';
+  return (
+    <div className="min-h-screen">
+      {!hideNavbar && <Navbar />}
+      <main className="container mx-auto px-4 py-8">
+        <AppRoutes />
+      </main>
+    </div>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen">
-            <Navbar />
-            <main className="container mx-auto px-4 py-8">
-              <AppRoutes />
-            </main>
-          </div>
+          <AppLayout />
         </Router>
       </AuthProvider>
     </QueryClientProvider>

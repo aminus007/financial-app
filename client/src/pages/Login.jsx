@@ -1,21 +1,20 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = () => {
-  const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+const Setup = () => {
+  const { register, updatePreferences } = useAuth();
+  const [form, setForm] = useState({
+    name: '',
+    currency: 'USD',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -23,11 +22,12 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      await login(formData);
+      const { name, currency } = form;
+      const user = await register({ name });
+      await updatePreferences({ currency });
     } catch (err) {
-      setError(err.message || 'Failed to login');
+      setError(err.message || 'Setup failed');
     } finally {
       setLoading(false);
     }
@@ -38,68 +38,54 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in to your account
+            Welcome! Set up your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Or{' '}
-            <Link
-              to="/register"
-              className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
-            >
-              create a new account
-            </Link>
-          </p>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 dark:bg-red-900/50 text-red-900 dark:text-red-200 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
-
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
+              <label htmlFor="name" className="sr-only">Name</label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="name"
+                name="name"
+                type="text"
                 required
                 className="input"
-                placeholder="Email address"
-                value={formData.email}
+                placeholder="Full name"
+                value={form.name}
                 onChange={handleChange}
               />
             </div>
-
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
+              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preferred Currency</label>
+              <select
+                id="currency"
+                name="currency"
                 className="input"
-                placeholder="Password"
-                value={formData.password}
+                value={form.currency}
                 onChange={handleChange}
-              />
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="CAD">CAD</option>
+                <option value="AUD">AUD</option>
+                <option value="MAD">MAD</option>
+                {/* Add more as needed */}
+              </select>
             </div>
           </div>
-
           <button
             type="submit"
             disabled={loading}
             className="btn btn-primary w-full flex justify-center"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Setting up...' : 'Start'}
           </button>
         </form>
       </div>
@@ -107,4 +93,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Setup; 

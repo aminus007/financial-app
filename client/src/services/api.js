@@ -49,6 +49,14 @@ export const goals = {
   delete: (id) => api.delete(`/goals/${id}`),
 };
 
+// Recurring Transactions API
+export const recurring = {
+  getAll: () => api.get('/recurring'),
+  create: (data) => api.post('/recurring', data),
+  update: (id, data) => api.patch(`/recurring/${id}`, data),
+  delete: (id) => api.delete(`/recurring/${id}`),
+};
+
 // Error handler
 api.interceptors.response.use(
   (response) => response.data,
