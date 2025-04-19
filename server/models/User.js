@@ -7,11 +7,21 @@ const userSchema = new mongoose.Schema({
     trim: true,
     unique: true,
   },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    trim: true,
+    unique: true,
+  },
   preferences: {
     currency: {
       type: String,
       default: 'USD',
     },
+  },
+  cash: {
+    type: Number,
+    default: 0,
   },
 }, {
   timestamps: true,

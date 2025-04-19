@@ -9,13 +9,13 @@ import Transactions from './pages/Transactions';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
-import Budgets from './pages/Budgets';
 import Goals from './pages/Goals';
 import Recurring from './pages/Recurring';
 import Setup from './pages/Login';
 import Settings from './pages/Settings';
 import Landing from './pages/Landing';
 import SalaryAllocator from './pages/SalaryAllocator';
+import Accounts from './pages/Accounts';
 
 // Components
 import Navbar from './components/Navbar';
@@ -81,11 +81,6 @@ const AppRoutes = () => {
           <Transactions />
         </PrivateRoute>
       } />
-      <Route path="/budgets" element={
-        <PrivateRoute>
-          <Budgets />
-        </PrivateRoute>
-      } />
       <Route path="/goals" element={
         <PrivateRoute>
           <Goals />
@@ -104,6 +99,11 @@ const AppRoutes = () => {
       <Route path="/salary-allocator" element={
         <PrivateRoute>
           <SalaryAllocator />
+        </PrivateRoute>
+      } />
+      <Route path="/accounts" element={
+        <PrivateRoute>
+          <Accounts />
         </PrivateRoute>
       } />
       <Route path="*" element={<NotFound />} />

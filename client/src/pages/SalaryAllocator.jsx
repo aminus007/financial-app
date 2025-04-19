@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { auth as authApi } from '../services/api';
 
 const DEFAULTS = { needs: 50, savings: 30, wants: 20 };
 
@@ -6,6 +8,18 @@ const SalaryAllocator = () => {
   const [salary, setSalary] = useState('');
   const [alloc, setAlloc] = useState({ ...DEFAULTS });
   const [result, setResult] = useState(null);
+  const queryClient = useQueryClient();
+  const { data: accounts } = useQuery(['user', 'accounts'], authApi.getAccounts);
+  const { data: user, refetch: refetchUser } = useQuery(['user', 'profile'], authApi.getProfile);
+  const updateAccountMutation = useMutation(
+    ({ id, balance }) => authApi.updateAccount(id, { balance }),
+    { onSuccess: () => queryClient.invalidateQueries(['user', 'accounts']) }
+  );
+  const updateCashMutation = useMutation(
+    (cash) => authApi.updateCash(cash),
+    { onSuccess: () => refetchUser() }
+  );
+  const [successMsg, setSuccessMsg] = useState('');
 
   // Helper to keep allocations sum to 100 and auto-adjust others
   const handleSlider = (type, value) => {
@@ -98,6 +112,54 @@ const SalaryAllocator = () => {
             <li><strong>Savings & Investments ({alloc.savings}%):</strong> ${result.savings}</li>
             <li><strong>Wants ({alloc.wants}%):</strong> ${result.wants}</li>
           </ul>
+          <div className="mt-4 flex flex-col gap-2">
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                // Needs to checking
+                const checking = (accounts || []).find(a => a.type === 'checking');
+                if (checking) {
+                  const newBalance = parseFloat(checking.balance) + parseFloat(result.needs);
+                  updateAccountMutation.mutate({ id: checking._id, balance: newBalance });
+                  setSuccessMsg('Allocated Needs to Checking');
+                } else {
+                  setSuccessMsg('No checking account found');
+                }
+              }}
+            >
+              Allocate Needs to Checking
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                // Savings & Investments to savings
+                const savings = (accounts || []).find(a => a.type === 'savings');
+                if (savings) {
+                  const newBalance = parseFloat(savings.balance) + parseFloat(result.savings);
+                  updateAccountMutation.mutate({ id: savings._id, balance: newBalance });
+                  setSuccessMsg('Allocated Savings & Investments to Savings');
+                } else {
+                  setSuccessMsg('No savings account found');
+                }
+              }}
+            >
+              Allocate Savings & Investments to Savings
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                // Wants to cash
+                if (user) {
+                  const newCash = parseFloat(user.cash || 0) + parseFloat(result.wants);
+                  updateCashMutation.mutate(newCash);
+                  setSuccessMsg('Allocated Wants to Cash');
+                }
+              }}
+            >
+              Allocate Wants to Cash
+            </button>
+            {successMsg && <div className="text-green-600 mt-2">{successMsg}</div>}
+          </div>
         </div>
       )}
     </div>

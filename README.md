@@ -9,7 +9,8 @@ A full-stack personal finance management application built with React, Node.js, 
 - 📈 Budget tracking
 - 🎯 Savings goals
 - 🌓 Dark mode support
-- 📱 Responsive design
+- �� Responsive design
+- 🧮 **Salary Allocator:** Input your salary and use interactive sliders to customize the 50-30-20 rule (Needs, Savings, Wants). Sliders auto-adjust to always total 100%, with suggested defaults and instant calculation.
 
 ## Tech Stack
 

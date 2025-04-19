@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { format } from 'date-fns';
 import {
   LineChart,
@@ -12,7 +12,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { transactions as transactionsApi } from '../services/api';
+import { transactions as transactionsApi, auth as authApi } from '../services/api';
 import { useState } from 'react';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
 
@@ -39,6 +39,8 @@ const Dashboard = () => {
     transactionsApi.getSummary()
   );
 
+  const { data: netBalanceData } = useQuery(['user', 'netbalance'], authApi.getNetBalance);
+
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -62,6 +64,28 @@ const Dashboard = () => {
     ['net-worth-trend'],
     () => transactionsApi.getNetWorthTrend({ months: 6 })
   );
+
+  const queryClient = useQueryClient();
+  const { data: accounts } = useQuery(['user', 'accounts'], authApi.getAccounts);
+  const updateAccountMutation = useMutation(
+    ({ id, balance }) => authApi.updateAccount(id, { balance }),
+    {
+      onSuccess: () => queryClient.invalidateQueries(['user', 'accounts']),
+    }
+  );
+  const [editBalances, setEditBalances] = useState({});
+
+  const { data: user, refetch: refetchUser } = useQuery(['user', 'profile'], authApi.getProfile);
+  const updateCashMutation = useMutation(
+    (cash) => authApi.updateCash(cash),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['user', 'netbalance']);
+        refetchUser();
+      },
+    }
+  );
+  const [editCash, setEditCash] = useState(undefined);
 
   // Prepare data for monthly spending chart and income vs expenses chart
   const monthlySpendingData = (netWorthTrend || []).map(item => ({
@@ -106,7 +130,7 @@ const Dashboard = () => {
         </div>
         <div className="card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 shadow rounded-lg p-6 flex flex-col items-center">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Net Balance</h3>
-          <p className={`mt-2 text-3xl font-bold ${(summary?.net || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>${summary?.net.toFixed(2) || '0.00'}</p>
+          <p className={`mt-2 text-3xl font-bold ${(netBalanceData?.netBalance || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>${netBalanceData?.netBalance?.toFixed(2) || '0.00'}</p>
         </div>
       </div>
       {/* Charts Section */}

@@ -2,11 +2,21 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+const accountTypes = [
+  { value: 'checking', label: 'Checking' },
+  { value: 'savings', label: 'Savings' },
+  { value: 'other', label: 'Other' },
+];
+
 const Register = () => {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
+    accounts: [],
+    cash: '',
   });
+  const [account, setAccount] = useState({ type: 'checking', balance: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,12 +28,39 @@ const Register = () => {
     }));
   };
 
+  const handleAccountChange = (e) => {
+    const { name, value } = e.target;
+    setAccount(prev => ({ ...prev, [name]: value }));
+  };
+
+  const addAccount = (e) => {
+    e.preventDefault();
+    if (!account.balance || isNaN(account.balance)) return;
+    setFormData(prev => ({
+      ...prev,
+      accounts: [...prev.accounts, { ...account, balance: parseFloat(account.balance) }]
+    }));
+    setAccount({ type: 'checking', balance: '' });
+  };
+
+  const removeAccount = (idx) => {
+    setFormData(prev => ({
+      ...prev,
+      accounts: prev.accounts.filter((_, i) => i !== idx)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await register({ name: formData.name });
+      await register({
+        name: formData.name,
+        email: formData.email,
+        accounts: formData.accounts,
+        cash: parseFloat(formData.cash) || 0,
+      });
     } catch (err) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -69,6 +106,69 @@ const Register = () => {
                 className="input"
                 placeholder="Full name"
                 value={formData.name}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="input"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Add Bank Account</label>
+              <div className="flex gap-2 mb-2">
+                <select
+                  name="type"
+                  value={account.type}
+                  onChange={handleAccountChange}
+                  className="input"
+                >
+                  {accountTypes.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <input
+                  name="balance"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Balance"
+                  value={account.balance}
+                  onChange={handleAccountChange}
+                  className="input"
+                />
+                <button onClick={addAccount} className="btn btn-secondary">Add</button>
+              </div>
+              <ul className="mb-2">
+                {formData.accounts.map((acc, idx) => (
+                  <li key={idx} className="flex justify-between items-center text-sm bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 mb-1">
+                    <span>{accountTypes.find(a => a.value === acc.type)?.label || acc.type}: ${acc.balance.toFixed(2)}</span>
+                    <button type="button" onClick={() => removeAccount(idx)} className="text-red-500 ml-2">Remove</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <label htmlFor="cash" className="block text-sm font-medium mb-1">Cash</label>
+              <input
+                id="cash"
+                name="cash"
+                type="number"
+                min="0"
+                step="0.01"
+                className="input"
+                placeholder="Cash amount"
+                value={formData.cash}
                 onChange={handleChange}
               />
             </div>
