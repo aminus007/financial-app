@@ -17,25 +17,29 @@ const HeroIllustration = () => (
 
 const FeatureIcon1 = () => (
   <svg width="36" height="36" fill="none" viewBox="0 0 36 36" className="mx-auto mb-2">
-    <rect x="6" y="10" width="24" height="16" rx="4" fill="#6366f1" className="dark:fill-primary-400" />
-    <rect x="10" y="14" width="16" height="8" rx="2" fill="#fff" />
-    <circle cx="14" cy="18" r="1.5" fill="#6366f1" />
-    <circle cx="18" cy="18" r="1.5" fill="#6366f1" />
-    <circle cx="22" cy="18" r="1.5" fill="#6366f1" />
+    <rect x="5" y="10" width="26" height="16" rx="5" fill="#6366f1" />
+    <rect x="7" y="14" width="22" height="8" rx="3" fill="#fff" />
+    <circle cx="11" cy="18" r="2" fill="#6366f1" />
+    <rect x="20" y="17" width="7" height="2" rx="1" fill="#6366f1" />
   </svg>
 );
 const FeatureIcon2 = () => (
   <svg width="36" height="36" fill="none" viewBox="0 0 36 36" className="mx-auto mb-2">
-    <rect x="8" y="8" width="20" height="20" rx="6" fill="#a5b4fc" className="dark:fill-primary-600" />
-    <rect x="14" y="14" width="8" height="8" rx="2" fill="#fff" />
-    <rect x="17" y="17" width="2" height="2" rx="1" fill="#a5b4fc" />
+    <circle cx="18" cy="18" r="14" fill="#a5b4fc" />
+    <circle cx="18" cy="18" r="9" fill="#fff" />
+    <circle cx="18" cy="18" r="4" fill="#6366f1" />
+    <rect x="17" y="6" width="2" height="6" rx="1" fill="#6366f1" />
+    <rect x="17" y="24" width="2" height="6" rx="1" fill="#6366f1" />
+    <rect x="6" y="17" width="6" height="2" rx="1" fill="#6366f1" />
+    <rect x="24" y="17" width="6" height="2" rx="1" fill="#6366f1" />
   </svg>
 );
 const FeatureIcon3 = () => (
   <svg width="36" height="36" fill="none" viewBox="0 0 36 36" className="mx-auto mb-2">
-    <ellipse cx="18" cy="28" rx="10" ry="4" fill="#e0e7ff" className="dark:fill-gray-700" />
-    <rect x="10" y="10" width="16" height="10" rx="4" fill="#818cf8" className="dark:fill-primary-400" />
-    <rect x="14" y="14" width="8" height="2" rx="1" fill="#fff" />
+    <circle cx="18" cy="18" r="14" fill="#e0e7ff" />
+    <path d="M18 18V6a12 12 0 0 1 12 12h-12z" fill="#6366f1" />
+    <path d="M18 18h12a12 12 0 0 1-12 12V18z" fill="#a5b4fc" />
+    <circle cx="18" cy="18" r="5" fill="#fff" />
   </svg>
 );
 

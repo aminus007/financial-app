@@ -38,7 +38,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
-    const { user, token } = await authApi.register({ name: userData.name });
+    const { user, token } = await authApi.register({
+      name: userData.name,
+      email: userData.email,
+      accounts: userData.accounts || [],
+      cash: userData.cash || 0,
+    });
     localStorage.setItem('token', token);
     setUser(user);
     return user;

@@ -19,6 +19,13 @@ export const auth = {
   login: (data) => api.post('/auth/login', data),
   getProfile: () => api.get('/auth/me'),
   updatePreferences: (data) => api.patch('/auth/preferences', data),
+  getNetBalance: () => api.get('/auth/me/netbalance'),
+  getAccounts: () => api.get('/auth/me/accounts'),
+  updateAccount: (id, data) => api.patch(`/auth/me/accounts/${id}`, data),
+  updateCash: (cash) => api.patch('/auth/me/cash', { cash }),
+  addAccount: (data) => api.post('/auth/me/accounts', data),
+  deleteAccount: (id) => api.delete(`/auth/me/accounts/${id}`),
+  getAccountHistory: (id) => api.get(`/auth/me/accounts/${id}/history`),
 };
 
 // Transactions API

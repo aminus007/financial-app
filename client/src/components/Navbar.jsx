@@ -11,10 +11,11 @@ const Navbar = () => {
 
   const navLinks = [
     { to: '/', label: 'Dashboard' },
+    { to: '/accounts', label: 'Accounts' },
     { to: '/transactions', label: 'Transactions' },
-    { to: '/budgets', label: 'Budgets' },
     { to: '/goals', label: 'Goals' },
     { to: '/recurring', label: 'Recurring' },
+    { to: '/salary-allocator', label: 'Salary Allocator' },
   ];
 
   // Toggle Switch Component with Sun/Moon icon
