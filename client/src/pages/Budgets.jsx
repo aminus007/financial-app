@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { budgets } from '../services/api';
+import BudgetPieChart from '../components/BudgetPieChart';
 
 const monthNames = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -138,14 +139,20 @@ const Budgets = () => {
           />
         </div>
         {isLoading ? <div>Loading...</div> : (
-          <ul className="mt-4 space-y-2">
-            {budgetsList?.map(b => (
-              <li key={b._id} className="flex justify-between items-center">
-                <span>{b.category} ({monthNames[b.month]} {b.year}): ${b.limit.toFixed(2)}</span>
-                <button className="btn btn-secondary" onClick={() => deleteBudget(b._id)}>Delete</button>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="mt-4 space-y-2">
+              {budgetsList?.map(b => (
+                <li key={b._id} className="flex justify-between items-center">
+                  <span>{b.category} ({monthNames[b.month]} {b.year}): ${b.limit.toFixed(2)}</span>
+                  <button className="btn btn-secondary" onClick={() => deleteBudget(b._id)}>Delete</button>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-2">Budget Allocation</h3>
+              <BudgetPieChart data={budgetsList} />
+            </div>
+          </>
         )}
       </div>
       <div className="card">

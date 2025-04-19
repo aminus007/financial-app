@@ -15,6 +15,7 @@ import Recurring from './pages/Recurring';
 import Setup from './pages/Login';
 import Settings from './pages/Settings';
 import Landing from './pages/Landing';
+import SalaryAllocator from './pages/SalaryAllocator';
 
 // Components
 import Navbar from './components/Navbar';
@@ -98,6 +99,11 @@ const AppRoutes = () => {
       <Route path="/settings" element={
         <PrivateRoute>
           <Settings />
+        </PrivateRoute>
+      } />
+      <Route path="/salary-allocator" element={
+        <PrivateRoute>
+          <SalaryAllocator />
         </PrivateRoute>
       } />
       <Route path="*" element={<NotFound />} />
