@@ -91,6 +91,21 @@ export const admin = {
   getAccounts: () => api.get('/auth/admin/accounts'),
 };
 
+// Debts API
+export const debts = {
+  // User endpoints
+  getAll: () => api.get('/debts'),
+  get: (id) => api.get(`/debts/${id}`),
+  create: (data) => api.post('/debts', data),
+  update: (id, data) => api.patch(`/debts/${id}`, data),
+  pay: (id, amount) => api.post(`/debts/${id}/pay`, { amount }),
+  delete: (id) => api.delete(`/debts/${id}`),
+  // Admin endpoints
+  getAllAdmin: () => api.get('/debts/admin/all'),
+  updateAdmin: (id, data) => api.patch(`/debts/admin/${id}`, data),
+  deleteAdmin: (id) => api.delete(`/debts/admin/${id}`),
+};
+
 // Error handler
 api.interceptors.response.use(
   (response) => response.data,

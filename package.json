@@ -16,5 +16,11 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.3",
+    "framer-motion": "^12.7.4",
+    "gsap": "^3.12.7",
+    "react-countup": "^6.5.3"
   }
-} 
+}
