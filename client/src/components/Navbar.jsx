@@ -58,6 +58,11 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              {user.isAdmin && (
+                <Link to="/admin" className="nav-link" onClick={() => setMobileOpen(false)}>
+                  Admin
+                </Link>
+              )}
             </div>
           )}
 
@@ -117,6 +122,11 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
+                {user.isAdmin && (
+                  <Link to="/admin" className="nav-link" onClick={() => setMobileOpen(false)}>
+                    Admin
+                  </Link>
+                )}
               </div>
             )}
             <div className="flex items-center space-x-4 mt-4">

@@ -11,7 +11,7 @@ const router = express.Router();
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, accounts = [], cash = 0 } = req.body;
+    const { name, email, accounts = [], cash = 0, isAdmin = false } = req.body;
 
     // Check if user already exists by email or name
     let user = await User.findOne({ $or: [{ email }, { name }] });
@@ -19,8 +19,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User with this email or name already exists' });
     }
 
-    // Create new user with cash and email
-    user = new User({ name, email, cash });
+    // Create new user with cash, email, and isAdmin
+    user = new User({ name, email, cash, isAdmin });
     await user.save();
 
     // Create accounts and log initial transactions
@@ -73,7 +73,7 @@ router.post('/register', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -97,7 +97,7 @@ router.post('/login', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -229,4 +229,59 @@ router.get('/me/accounts/:id/history', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Admin middleware
+function requireAdmin(req, res, next) {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+}
+
+// List all users (admin only)
+router.get('/admin/users', auth, requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find().select('-__v -password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update user (promote/demote admin, etc.) (admin only)
+router.patch('/admin/users/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const { isAdmin } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isAdmin },
+      { new: true }
+    ).select('-__v -password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete user (admin only)
+router.delete('/admin/users/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'User deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin: Get all accounts with user info
+router.get('/admin/accounts', auth, requireAdmin, async (req, res) => {
+  try {
+    const accounts = await Account.find().populate('user', 'name email');
+    res.json(accounts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = { router, requireAdmin }; 

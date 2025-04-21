@@ -15,6 +15,7 @@ import {
 import { transactions as transactionsApi, auth as authApi } from '../services/api';
 import { useState } from 'react';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
+import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
 
 const monthNames = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -33,6 +34,23 @@ const COLORS = [
   '#FFC658',
   '#FF7C43',
 ];
+
+// Utility for currency symbol
+const currencySymbols = {
+  MAD: 'MAD',
+  USD: '$',
+  GBP: '£',
+  EUR: '€',
+};
+function formatCurrency(amount, currency) {
+  if (currency === 'MAD') {
+    return `${amount} MAD`;
+  } else if (currency === 'USD' || currency === 'GBP' || currency === 'EUR') {
+    return `${currencySymbols[currency] || currency}${amount}`;
+  } else {
+    return `${amount} ${currencySymbols[currency] || currency}`;
+  }
+}
 
 const Dashboard = () => {
   const { data: summary } = useQuery(['transactions', 'summary'], () =>
@@ -87,6 +105,9 @@ const Dashboard = () => {
   );
   const [editCash, setEditCash] = useState(undefined);
 
+  const { user: authUser } = useAuth();
+  const currency = getPreferredCurrency(authUser);
+
   // Prepare data for monthly spending chart and income vs expenses chart
   const monthlySpendingData = (netWorthTrend || []).map(item => ({
     month: monthNamesShort[item.month],
@@ -100,6 +121,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-10 px-2 md:px-8 py-6 max-w-7xl mx-auto">
+      {/* Currency Selector is now in Settings. Currency is global. */}
       {/* Month/Year Selectors */}
       <div className="flex flex-wrap gap-4 items-center mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <label className="mr-2 font-medium">Month:</label>
@@ -122,15 +144,15 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="card bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 shadow rounded-lg p-6 flex flex-col items-center">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Income</h3>
-          <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">${summary?.income.toFixed(2) || '0.00'}</p>
+          <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(summary?.income.toFixed(2) || '0.00', currency)}</p>
         </div>
         <div className="card bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900 dark:to-red-800 shadow rounded-lg p-6 flex flex-col items-center">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Expenses</h3>
-          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">${summary?.expense.toFixed(2) || '0.00'}</p>
+          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">{formatCurrency(summary?.expense.toFixed(2) || '0.00', currency)}</p>
         </div>
         <div className="card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 shadow rounded-lg p-6 flex flex-col items-center">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Net Balance</h3>
-          <p className={`mt-2 text-3xl font-bold ${(netBalanceData?.netBalance || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>${netBalanceData?.netBalance?.toFixed(2) || '0.00'}</p>
+          <p className={`mt-2 text-3xl font-bold ${(netBalanceData?.netBalance || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatCurrency(netBalanceData?.netBalance?.toFixed(2) || '0.00', currency)}</p>
         </div>
       </div>
       {/* Charts Section */}
@@ -178,7 +200,7 @@ const Dashboard = () => {
                         dominantBaseline="central"
                         style={{ fontSize: 12 }}
                       >
-                        {categories[index]._id} (${value.toFixed(0)})
+                        {categories[index]._id} ({formatCurrency(value.toFixed(0), currency)})
                       </text>
                     );
                   }}
@@ -201,7 +223,7 @@ const Dashboard = () => {
             {topCategories?.length ? topCategories.map((cat, i) => (
               <li key={cat._id} className="flex justify-between border-b pb-1 last:border-b-0">
                 <span>{i + 1}. {cat._id}</span>
-                <span className="font-bold text-red-600 dark:text-red-400">${cat.total.toFixed(2)}</span>
+                <span className="font-bold text-red-600 dark:text-red-400">{formatCurrency(cat.total.toFixed(2), currency)}</span>
               </li>
             )) : <li>No data</li>}
           </ul>

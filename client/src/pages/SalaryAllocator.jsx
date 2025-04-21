@@ -1,6 +1,26 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { auth as authApi } from '../services/api';
+import { transactions } from '../services/api';
+import { CurrencyDollarIcon } from '@heroicons/react/24/solid';
+import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
+
+// Utility for currency symbol
+const currencySymbols = {
+  MAD: 'MAD',
+  USD: '$',
+  GBP: '£',
+  EUR: '€',
+};
+function formatCurrency(amount, currency) {
+  if (currency === 'MAD') {
+    return `${amount} MAD`;
+  } else if (currency === 'USD' || currency === 'GBP' || currency === 'EUR') {
+    return `${currencySymbols[currency] || currency}${amount}`;
+  } else {
+    return `${amount} ${currencySymbols[currency] || currency}`;
+  }
+}
 
 const DEFAULTS = { needs: 50, savings: 30, wants: 20 };
 
@@ -20,6 +40,9 @@ const SalaryAllocator = () => {
     { onSuccess: () => refetchUser() }
   );
   const [successMsg, setSuccessMsg] = useState('');
+
+  const { user: authUser } = useAuth();
+  const currency = getPreferredCurrency(authUser);
 
   // Helper to keep allocations sum to 100 and auto-adjust others
   const handleSlider = (type, value) => {
@@ -73,6 +96,7 @@ const SalaryAllocator = () => {
 
   return (
     <div className="card max-w-lg mx-auto">
+      {/* Currency Selector is now in Settings. Currency is global. */}
       <h2 className="text-2xl font-bold mb-4">50-30-20 Salary Allocator</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="font-medium">
@@ -108,55 +132,75 @@ const SalaryAllocator = () => {
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">Allocation:</h3>
           <ul className="space-y-1">
-            <li><strong>Needs ({alloc.needs}%):</strong> ${result.needs}</li>
-            <li><strong>Savings & Investments ({alloc.savings}%):</strong> ${result.savings}</li>
-            <li><strong>Wants ({alloc.wants}%):</strong> ${result.wants}</li>
+            <li><strong>Needs ({alloc.needs}%):</strong> {formatCurrency(result.needs, currency)}</li>
+            <li><strong>Savings & Investments ({alloc.savings}%):</strong> {formatCurrency(result.savings, currency)}</li>
+            <li><strong>Wants ({alloc.wants}%):</strong> {formatCurrency(result.wants, currency)}</li>
           </ul>
           <div className="mt-4 flex flex-col gap-2">
             <button
-              className="btn btn-primary"
+              className="btn btn-success flex items-center justify-center gap-2 text-lg py-3 w-full mt-2"
               onClick={async () => {
+                let allOk = true;
+                let msg = [];
+                const now = new Date();
+                const monthName = now.toLocaleString('default', { month: 'long' });
+                const year = now.getFullYear();
+                const note = `${monthName} ${year} salary`;
                 // Needs to checking
                 const checking = (accounts || []).find(a => a.type === 'checking');
                 if (checking) {
                   const newBalance = parseFloat(checking.balance) + parseFloat(result.needs);
-                  updateAccountMutation.mutate({ id: checking._id, balance: newBalance });
-                  setSuccessMsg('Allocated Needs to Checking');
+                  await updateAccountMutation.mutateAsync({ id: checking._id, balance: newBalance });
+                  await transactions.create({
+                    type: 'income',
+                    amount: parseFloat(result.needs),
+                    category: 'Salary',
+                    note,
+                    date: now.toISOString().slice(0, 10),
+                  });
+                  msg.push('Needs allocated to Checking');
                 } else {
-                  setSuccessMsg('No checking account found');
+                  allOk = false;
+                  msg.push('No checking account found');
                 }
-              }}
-            >
-              Allocate Needs to Checking
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={async () => {
-                // Savings & Investments to savings
+                // Savings to savings
                 const savings = (accounts || []).find(a => a.type === 'savings');
                 if (savings) {
                   const newBalance = parseFloat(savings.balance) + parseFloat(result.savings);
-                  updateAccountMutation.mutate({ id: savings._id, balance: newBalance });
-                  setSuccessMsg('Allocated Savings & Investments to Savings');
+                  await updateAccountMutation.mutateAsync({ id: savings._id, balance: newBalance });
+                  await transactions.create({
+                    type: 'income',
+                    amount: parseFloat(result.savings),
+                    category: 'Salary',
+                    note,
+                    date: now.toISOString().slice(0, 10),
+                  });
+                  msg.push('Savings allocated to Savings');
                 } else {
-                  setSuccessMsg('No savings account found');
+                  allOk = false;
+                  msg.push('No savings account found');
                 }
-              }}
-            >
-              Allocate Savings & Investments to Savings
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={async () => {
                 // Wants to cash
-                if (user) {
-                  const newCash = parseFloat(user.cash || 0) + parseFloat(result.wants);
-                  updateCashMutation.mutate(newCash);
-                  setSuccessMsg('Allocated Wants to Cash');
+                if (authUser) {
+                  const newCash = parseFloat(authUser.cash || 0) + parseFloat(result.wants);
+                  await updateCashMutation.mutateAsync(newCash);
+                  await transactions.create({
+                    type: 'income',
+                    amount: parseFloat(result.wants),
+                    category: 'Salary',
+                    note,
+                    date: now.toISOString().slice(0, 10),
+                  });
+                  msg.push('Wants allocated to Cash');
+                } else {
+                  allOk = false;
+                  msg.push('No user found for cash allocation');
                 }
+                setSuccessMsg(msg.join('. '));
               }}
             >
-              Allocate Wants to Cash
+              <CurrencyDollarIcon className="h-7 w-7 text-white" />
+              Allocate All
             </button>
             {successMsg && <div className="text-green-600 mt-2">{successMsg}</div>}
           </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { format } from 'date-fns';
 import { transactions as transactionsApi } from '../services/api';
+import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
 
 const TRANSACTION_CATEGORIES = {
   income: [
@@ -21,6 +22,24 @@ const TRANSACTION_CATEGORIES = {
     'Other Expenses',
   ],
 };
+
+// Utility for currency symbol
+const currencySymbols = {
+  MAD: 'MAD',
+  USD: '$',
+  GBP: '£',
+  EUR: '€',
+};
+
+function formatCurrency(amount, currency) {
+  if (currency === 'MAD') {
+    return `${amount} MAD`;
+  } else if (currency === 'USD' || currency === 'GBP' || currency === 'EUR') {
+    return `${currencySymbols[currency] || currency}${amount}`;
+  } else {
+    return `${amount} ${currencySymbols[currency] || currency}`;
+  }
+}
 
 const TransactionForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -163,6 +182,8 @@ const TransactionForm = ({ onSuccess }) => {
 };
 
 const TransactionList = () => {
+  const { user: authUser } = useAuth();
+  const currency = getPreferredCurrency(authUser);
   const [filters, setFilters] = useState({
     type: '',
     category: '',
@@ -269,7 +290,7 @@ const TransactionList = () => {
                   {transaction.category}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  ${transaction.amount.toFixed(2)}
+                  {formatCurrency(transaction.amount.toFixed(2), currency)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                   {transaction.note}

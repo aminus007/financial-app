@@ -1,6 +1,7 @@
 const express = require('express');
 const Goal = require('../models/Goal');
 const auth = require('../middleware/auth');
+const { requireAdmin } = require('./auth'); // Import admin middleware
 
 const router = express.Router();
 
@@ -49,6 +50,38 @@ router.delete('/:id', auth, async (req, res) => {
   const goal = await Goal.findOneAndDelete({ _id: req.params.id, user: req.user._id });
   if (!goal) return res.status(404).json({ message: 'Goal not found' });
   res.json(goal);
+});
+
+// List all goals (admin only)
+router.get('/admin/all', auth, requireAdmin, async (req, res) => {
+  try {
+    const goals = await Goal.find().populate('user', 'name email');
+    res.json(goals);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update any goal (admin only)
+router.patch('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const goal = await Goal.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!goal) return res.status(404).json({ message: 'Goal not found' });
+    res.json(goal);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete any goal (admin only)
+router.delete('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const goal = await Goal.findByIdAndDelete(req.params.id);
+    if (!goal) return res.status(404).json({ message: 'Goal not found' });
+    res.json({ message: 'Goal deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router; 

@@ -3,6 +3,7 @@ const Transaction = require('../models/Transaction');
 const auth = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const moment = require('moment');
+const { requireAdmin } = require('./auth'); // Import admin middleware
 
 const router = express.Router();
 
@@ -268,6 +269,38 @@ router.get('/net-worth-trend', auth, async (req, res) => {
     });
   }
   res.json(trend);
+});
+
+// List all transactions (admin only)
+router.get('/admin/all', auth, requireAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find().populate('user', 'name email').sort({ date: -1 });
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update any transaction (admin only)
+router.patch('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const transaction = await Transaction.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+    res.json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete any transaction (admin only)
+router.delete('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const transaction = await Transaction.findByIdAndDelete(req.params.id);
+    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+    res.json({ message: 'Transaction deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router; 

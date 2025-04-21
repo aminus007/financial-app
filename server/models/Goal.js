@@ -21,6 +21,10 @@ const goalSchema = new mongoose.Schema({
   deadline: {
     type: Date,
   },
+  priority: {
+    type: Number,
+    default: 1,
+  },
 }, {
   timestamps: true,
 });

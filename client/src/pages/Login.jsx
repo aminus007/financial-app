@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-const Setup = () => {
-  const { register, updatePreferences } = useAuth();
+const Login = () => {
+  const { login } = useAuth();
   const [form, setForm] = useState({
     name: '',
-    currency: 'USD',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -23,11 +24,14 @@ const Setup = () => {
     setError('');
     setLoading(true);
     try {
-      const { name, currency } = form;
-      const user = await register({ name });
-      await updatePreferences({ currency });
+      const user = await login({ name: form.name });
+      if (user.isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err) {
-      setError(err.message || 'Setup failed');
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -38,7 +42,7 @@ const Setup = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Welcome! Set up your account
+            Sign in to your account
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -61,31 +65,13 @@ const Setup = () => {
                 onChange={handleChange}
               />
             </div>
-            <div>
-              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preferred Currency</label>
-              <select
-                id="currency"
-                name="currency"
-                className="input"
-                value={form.currency}
-                onChange={handleChange}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="CAD">CAD</option>
-                <option value="AUD">AUD</option>
-                <option value="MAD">MAD</option>
-                {/* Add more as needed */}
-              </select>
-            </div>
           </div>
           <button
             type="submit"
             disabled={loading}
             className="btn btn-primary w-full flex justify-center"
           >
-            {loading ? 'Setting up...' : 'Start'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
       </div>
@@ -93,4 +79,4 @@ const Setup = () => {
   );
 };
 
-export default Setup; 
+export default Login; 

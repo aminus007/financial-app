@@ -11,11 +11,11 @@ import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import Goals from './pages/Goals';
 import Recurring from './pages/Recurring';
-import Setup from './pages/Login';
 import Settings from './pages/Settings';
 import Landing from './pages/Landing';
 import SalaryAllocator from './pages/SalaryAllocator';
 import Accounts from './pages/Accounts';
+import Admin from './pages/Admin';
 
 // Components
 import Navbar from './components/Navbar';
@@ -63,7 +63,7 @@ const AppRoutes = () => {
       } />
       <Route path="/login" element={
         <PublicRoute>
-          <Setup />
+          <Login />
         </PublicRoute>
       } />
       <Route path="/register" element={
@@ -104,6 +104,11 @@ const AppRoutes = () => {
       <Route path="/accounts" element={
         <PrivateRoute>
           <Accounts />
+        </PrivateRoute>
+      } />
+      <Route path="/admin" element={
+        <PrivateRoute>
+          <Admin />
         </PrivateRoute>
       } />
       <Route path="*" element={<NotFound />} />

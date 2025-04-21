@@ -1,6 +1,7 @@
 const express = require('express');
 const RecurringTransaction = require('../models/RecurringTransaction');
 const auth = require('../middleware/auth');
+const { requireAdmin } = require('./auth'); // Import admin middleware
 
 const router = express.Router();
 
@@ -52,6 +53,38 @@ router.delete('/:id', auth, async (req, res) => {
   const recur = await RecurringTransaction.findOneAndDelete({ _id: req.params.id, user: req.user._id });
   if (!recur) return res.status(404).json({ message: 'Not found' });
   res.json(recur);
+});
+
+// List all recurring transactions (admin only)
+router.get('/admin/all', auth, requireAdmin, async (req, res) => {
+  try {
+    const recurs = await RecurringTransaction.find().populate('user', 'name email');
+    res.json(recurs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update any recurring transaction (admin only)
+router.patch('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const recur = await RecurringTransaction.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!recur) return res.status(404).json({ message: 'Recurring transaction not found' });
+    res.json(recur);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete any recurring transaction (admin only)
+router.delete('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const recur = await RecurringTransaction.findByIdAndDelete(req.params.id);
+    if (!recur) return res.status(404).json({ message: 'Recurring transaction not found' });
+    res.json({ message: 'Recurring transaction deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router; 

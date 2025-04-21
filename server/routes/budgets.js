@@ -2,6 +2,7 @@ const express = require('express');
 const Budget = require('../models/Budget');
 const Transaction = require('../models/Transaction');
 const auth = require('../middleware/auth');
+const { requireAdmin } = require('./auth'); // Import admin middleware
 
 const router = express.Router();
 
@@ -60,6 +61,38 @@ router.get('/progress', auth, async (req, res) => {
     };
   }));
   res.json(results);
+});
+
+// List all budgets (admin only)
+router.get('/admin/all', auth, requireAdmin, async (req, res) => {
+  try {
+    const budgets = await Budget.find().populate('user', 'name email');
+    res.json(budgets);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update any budget (admin only)
+router.patch('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const budget = await Budget.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!budget) return res.status(404).json({ message: 'Budget not found' });
+    res.json(budget);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete any budget (admin only)
+router.delete('/admin/:id', auth, requireAdmin, async (req, res) => {
+  try {
+    const budget = await Budget.findByIdAndDelete(req.params.id);
+    if (!budget) return res.status(404).json({ message: 'Budget not found' });
+    res.json({ message: 'Budget deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router; 

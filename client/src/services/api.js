@@ -54,6 +54,7 @@ export const goals = {
   create: (data) => api.post('/goals', data),
   addFunds: (id, amount) => api.post(`/goals/${id}/add`, { amount }),
   delete: (id) => api.delete(`/goals/${id}`),
+  update: (id, data) => api.patch(`/goals/${id}`, data),
 };
 
 // Recurring Transactions API
@@ -62,6 +63,32 @@ export const recurring = {
   create: (data) => api.post('/recurring', data),
   update: (id, data) => api.patch(`/recurring/${id}`, data),
   delete: (id) => api.delete(`/recurring/${id}`),
+};
+
+// Admin API
+export const admin = {
+  // Users
+  getUsers: () => api.get('/auth/admin/users'),
+  updateUser: (id, data) => api.patch(`/auth/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/auth/admin/users/${id}`),
+  // Transactions
+  getTransactions: () => api.get('/transactions/admin/all'),
+  updateTransaction: (id, data) => api.patch(`/transactions/admin/${id}`, data),
+  deleteTransaction: (id) => api.delete(`/transactions/admin/${id}`),
+  // Budgets
+  getBudgets: () => api.get('/budgets/admin/all'),
+  updateBudget: (id, data) => api.patch(`/budgets/admin/${id}`, data),
+  deleteBudget: (id) => api.delete(`/budgets/admin/${id}`),
+  // Goals
+  getGoals: () => api.get('/goals/admin/all'),
+  updateGoal: (id, data) => api.patch(`/goals/admin/${id}`, data),
+  deleteGoal: (id) => api.delete(`/goals/admin/${id}`),
+  // Recurring Transactions
+  getRecurring: () => api.get('/recurring/admin/all'),
+  updateRecurring: (id, data) => api.patch(`/recurring/admin/${id}`, data),
+  deleteRecurring: (id) => api.delete(`/recurring/admin/${id}`),
+  // Accounts
+  getAccounts: () => api.get('/auth/admin/accounts'),
 };
 
 // Error handler

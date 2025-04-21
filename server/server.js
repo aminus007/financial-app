@@ -8,7 +8,7 @@ const RecurringTransaction = require('./models/RecurringTransaction');
 const Transaction = require('./models/Transaction');
 const Account = require('./models/Account');
 
-const authRoutes = require('./routes/auth');
+const { router: authRoutes } = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 const budgetRoutes = require('./routes/budgets');
 const goalRoutes = require('./routes/goals');

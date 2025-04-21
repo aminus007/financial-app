@@ -11,6 +11,11 @@ export const useAuth = () => {
   return context;
 };
 
+// Utility to get preferred currency from user
+function getPreferredCurrency(user) {
+  return user?.preferences?.currency || 'MAD';
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +48,7 @@ export const AuthProvider = ({ children }) => {
       email: userData.email,
       accounts: userData.accounts || [],
       cash: userData.cash || 0,
+      isAdmin: userData.isAdmin || false,
     });
     localStorage.setItem('token', token);
     setUser(user);
@@ -67,6 +73,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updatePreferences,
+    getPreferredCurrency: () => getPreferredCurrency(user),
   };
 
   if (loading) {
@@ -78,4 +85,6 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};
+
+export { getPreferredCurrency }; 
