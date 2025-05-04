@@ -2,6 +2,70 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { admin } from '../services/api';
+import Modal from '../components/Modal';
+
+const TransactionEditForm = ({ transaction, accounts, onSave, onCancel }) => {
+  const [form, setForm] = React.useState({ ...transaction });
+  const [error, setError] = React.useState('');
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+  };
+  const handleSubmit = e => {
+    e.preventDefault();
+    if (form.type === 'expense' && !form.source) {
+      setError('Source is required for expenses');
+      return;
+    }
+    onSave(form);
+  };
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium">Type</label>
+          <select name="type" value={form.type} onChange={handleChange} className="input" required>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Amount</label>
+          <input name="amount" type="number" value={form.amount} onChange={handleChange} className="input" required />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Category</label>
+          <input name="category" value={form.category} onChange={handleChange} className="input" required />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Date</label>
+          <input name="date" type="date" value={form.date?.slice(0,10)} onChange={handleChange} className="input" required />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium">Note</label>
+          <input name="note" value={form.note || ''} onChange={handleChange} className="input" />
+        </div>
+        {form.type === 'expense' && (
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium">Source</label>
+            <select name="source" value={form.source} onChange={handleChange} className="input" required>
+              <option value="">Select source</option>
+              <option value="cash">Cash</option>
+              {(accounts || []).map(acc => (
+                <option key={acc._id} value={acc._id}>{acc.type} ({acc.balance})</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+      {error && <div className="text-red-600 text-sm">{error}</div>}
+      <div className="flex gap-2 justify-end">
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="btn btn-primary">Save</button>
+      </div>
+    </form>
+  );
+};
 
 const Admin = () => {
   const { user } = useAuth();
@@ -14,6 +78,7 @@ const Admin = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editTx, setEditTx] = useState(null);
 
   // Fetch all admin data
   useEffect(() => {
@@ -166,6 +231,7 @@ const Admin = () => {
                 <td className="p-2">{t.category}</td>
                 <td className="p-2">{new Date(t.date).toLocaleString()}</td>
                 <td className="p-2">
+                  <button className="btn btn-xs btn-secondary mr-2" onClick={() => setEditTx(t)}>Edit</button>
                   <button className="btn btn-xs btn-danger" onClick={() => handleDelete('transaction', t._id)}>
                     Delete
                   </button>
@@ -174,6 +240,25 @@ const Admin = () => {
             ))}
           </tbody>
         </table>
+        {editTx && (
+          <Modal onClose={() => setEditTx(null)}>
+            <h3 className="text-lg font-bold mb-4">Edit Transaction</h3>
+            <TransactionEditForm
+              transaction={editTx}
+              accounts={accounts}
+              onSave={async (data) => {
+                try {
+                  const updated = await admin.updateTransaction(editTx._id, data);
+                  setTransactions(ts => ts.map(t => t._id === editTx._id ? updated : t));
+                  setEditTx(null);
+                } catch (err) {
+                  alert(err.message || 'Failed to update transaction');
+                }
+              }}
+              onCancel={() => setEditTx(null)}
+            />
+          </Modal>
+        )}
       </section>
       {/* Budgets */}
       <section className="bg-white dark:bg-gray-800 rounded shadow p-6 mb-8 overflow-x-auto">

@@ -13,12 +13,13 @@ const Accounts = () => {
   const queryClient = useQueryClient();
   const { data: accounts } = useQuery(['user', 'accounts'], authApi.getAccounts);
   const updateAccountMutation = useMutation(
-    ({ id, balance }) => authApi.updateAccount(id, { balance }),
+    ({ id, balance, name }) => authApi.updateAccount(id, { balance, name }),
     {
       onSuccess: () => queryClient.invalidateQueries(['user', 'accounts']),
     }
   );
   const [editBalances, setEditBalances] = useState({});
+  const [editNames, setEditNames] = useState({});
 
   const { data: user, refetch: refetchUser } = useQuery(['user', 'profile'], authApi.getProfile);
   const updateCashMutation = useMutation(
@@ -54,43 +55,129 @@ const Accounts = () => {
     { enabled: !!historyAccountId }
   );
 
+  // Transfer state
+  const [transfer, setTransfer] = useState({ sourceType: 'cash', sourceId: '', destType: 'account', destId: '', amount: '' });
+  const [transferError, setTransferError] = useState('');
+  const transferMutation = useMutation(authApi.transfer, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['user', 'accounts']);
+      refetchUser();
+      setTransfer({ sourceType: 'cash', sourceId: '', destType: 'account', destId: '', amount: '' });
+      setTransferError('');
+    },
+    onError: (err) => setTransferError(err?.message || 'Transfer failed'),
+  });
+
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Accounts</h3>
-        {/* Add Account Form */}
+    <div className="max-w-2xl mx-auto py-8 px-4 flex flex-col gap-8">
+      {/* Account Summary */}
+      <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account Summary</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col items-start p-3 bg-gray-100 dark:bg-gray-700 rounded">
+            <span className="text-xs text-gray-500">Cash</span>
+            <span className="font-bold text-lg">${user?.cash?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '0.00'}</span>
+          </div>
+          {(accounts || []).map(acc => (
+            <div key={acc._id} className="flex flex-col items-start p-3 bg-gray-100 dark:bg-gray-700 rounded">
+              <span className="text-xs text-gray-500">{acc.type.charAt(0).toUpperCase() + acc.type.slice(1)}</span>
+              <span className="font-bold text-lg">
+                {acc.type === 'checking' && acc.name ? `${acc.name} ` : ''}${acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Transfer Funds */}
+      <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Transfer Funds</h3>
         <form
-          className="flex gap-2 mb-4"
+          className="flex flex-col md:flex-row gap-2 items-end"
           onSubmit={e => {
             e.preventDefault();
-            addAccountMutation.mutate({
-              type: newAccount.type,
-              balance: parseFloat(newAccount.balance) || 0,
+            let sourceId = transfer.sourceType === 'account' ? transfer.sourceId : undefined;
+            let destId = transfer.destType === 'account' ? transfer.destId : undefined;
+            if (transfer.sourceType === 'account' && !sourceId) return setTransferError('Select source account');
+            if (transfer.destType === 'account' && !destId) return setTransferError('Select destination account');
+            if (transfer.sourceType === transfer.destType && sourceId === destId) return setTransferError('Source and destination must be different');
+            transferMutation.mutate({
+              sourceType: transfer.sourceType,
+              sourceId,
+              destType: transfer.destType,
+              destId,
+              amount: parseFloat(transfer.amount),
             });
           }}
         >
-          <select
-            className="input"
-            value={newAccount.type}
-            onChange={e => setNewAccount(a => ({ ...a, type: e.target.value }))}
-          >
-            {accountTypes.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-          <input
-            type="number"
-            className="input w-28"
-            placeholder="Balance"
-            min="0"
-            step="0.01"
-            value={newAccount.balance}
-            onChange={e => setNewAccount(a => ({ ...a, balance: e.target.value }))}
-          />
-          <button className="btn btn-primary" type="submit" disabled={addAccountMutation.isLoading}>
-            Add Account
+          <div>
+            <label className="block text-xs mb-1">From</label>
+            <select
+              className="input"
+              value={transfer.sourceType}
+              onChange={e => setTransfer(t => ({ ...t, sourceType: e.target.value, sourceId: '' }))}
+            >
+              <option value="cash">Cash</option>
+              <option value="account">Account</option>
+            </select>
+            {transfer.sourceType === 'account' && (
+              <select
+                className="input mt-1"
+                value={transfer.sourceId}
+                onChange={e => setTransfer(t => ({ ...t, sourceId: e.target.value }))}
+              >
+                <option value="">Select account</option>
+                {(accounts || []).map(acc => (
+                  <option key={acc._id} value={acc._id}>{acc.type} {acc.type === 'checking' && acc.name ? `(${acc.name})` : ''} (${acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs mb-1">To</label>
+            <select
+              className="input"
+              value={transfer.destType}
+              onChange={e => setTransfer(t => ({ ...t, destType: e.target.value, destId: '' }))}
+            >
+              <option value="cash">Cash</option>
+              <option value="account">Account</option>
+            </select>
+            {transfer.destType === 'account' && (
+              <select
+                className="input mt-1"
+                value={transfer.destId}
+                onChange={e => setTransfer(t => ({ ...t, destId: e.target.value }))}
+              >
+                <option value="">Select account</option>
+                {(accounts || []).map(acc => (
+                  <option key={acc._id} value={acc._id}>{acc.type} {acc.type === 'checking' && acc.name ? `(${acc.name})` : ''} (${acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs mb-1">Amount</label>
+            <input
+              type="number"
+              className="input w-28"
+              min="0.01"
+              step="0.01"
+              value={transfer.amount}
+              onChange={e => setTransfer(t => ({ ...t, amount: e.target.value }))}
+              required
+            />
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={transferMutation.isLoading}>
+            Transfer
           </button>
         </form>
+        {transferError && <div className="text-red-500 text-sm mt-2">{transferError}</div>}
+      </div>
+
+      {/* Accounts List */}
+      <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Accounts List</h3>
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           <li className="flex items-center justify-between py-2">
             <span className="capitalize">Cash</span>
@@ -121,6 +208,26 @@ const Accounts = () => {
             <li key={acc._id} className="flex items-center justify-between py-2">
               <span className="capitalize">{acc.type}</span>
               <div className="flex items-center gap-2">
+                {acc.type === 'checking' && (
+                  <input
+                    type="text"
+                    className="input w-32"
+                    placeholder="Account Name"
+                    value={editNames[acc._id] !== undefined ? editNames[acc._id] : acc.name || ''}
+                    onChange={e => setEditNames(n => ({ ...n, [acc._id]: e.target.value }))}
+                    onBlur={() => {
+                      if (editNames[acc._id] !== undefined && editNames[acc._id] !== acc.name) {
+                        updateAccountMutation.mutate({ id: acc._id, name: editNames[acc._id] });
+                        setEditNames(n => ({ ...n, [acc._id]: undefined }));
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.target.blur();
+                      }
+                    }}
+                  />
+                )}
                 <input
                   type="number"
                   className="input w-28"
@@ -159,6 +266,44 @@ const Accounts = () => {
           ))}
         </ul>
       </div>
+
+      {/* Add Account */}
+      <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add New Account</h3>
+        <form
+          className="flex gap-2"
+          onSubmit={e => {
+            e.preventDefault();
+            addAccountMutation.mutate({
+              type: newAccount.type,
+              balance: parseFloat(newAccount.balance) || 0,
+            });
+          }}
+        >
+          <select
+            className="input"
+            value={newAccount.type}
+            onChange={e => setNewAccount(a => ({ ...a, type: e.target.value }))}
+          >
+            {accountTypes.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            className="input w-28"
+            placeholder="Balance"
+            min="0"
+            step="0.01"
+            value={newAccount.balance}
+            onChange={e => setNewAccount(a => ({ ...a, balance: e.target.value }))}
+          />
+          <button className="btn btn-primary" type="submit" disabled={addAccountMutation.isLoading}>
+            Add Account
+          </button>
+        </form>
+      </div>
+
       {/* Account History Modal */}
       {historyAccountId && (
         <Modal onClose={() => setHistoryAccountId(null)}>

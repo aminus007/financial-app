@@ -11,6 +11,11 @@ const accountSchema = new mongoose.Schema({
     enum: ['checking', 'savings', 'other'],
     required: true,
   },
+  name: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   balance: {
     type: Number,
     default: 0,

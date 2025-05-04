@@ -88,6 +88,7 @@ router.post('/:id/pay', auth, async (req, res) => {
       category: 'debt payment',
       note: `Payment for debt: ${debt.name}`,
       date: new Date(),
+      source: accountId,
     });
     // Update debt
     debt.paidAmount += amount;

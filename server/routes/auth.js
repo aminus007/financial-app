@@ -152,16 +152,15 @@ router.get('/me/accounts', auth, async (req, res) => {
   }
 });
 
-// Update an account's balance
+// Update an account's balance or name (if checking)
 router.patch('/me/accounts/:id', auth, async (req, res) => {
   try {
-    const { balance } = req.body;
-    const account = await Account.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      { balance },
-      { new: true }
-    );
+    const { balance, name } = req.body;
+    const account = await Account.findOne({ _id: req.params.id, user: req.user._id });
     if (!account) return res.status(404).json({ message: 'Account not found' });
+    if (balance !== undefined) account.balance = balance;
+    if (name !== undefined && account.type === 'checking') account.name = name;
+    await account.save();
     res.json(account);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -224,6 +223,64 @@ router.get('/me/accounts/:id/history', auth, async (req, res) => {
     if (!account) return res.status(404).json({ message: 'Account not found' });
     const transactions = await Transaction.find({ user: req.user._id, category: account.type }).sort({ date: -1 });
     res.json(transactions);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Transfer between accounts or to/from cash
+router.post('/me/transfer', auth, async (req, res) => {
+  try {
+    const { sourceType, sourceId, destType, destId, amount } = req.body;
+    if (!amount || amount <= 0) return res.status(400).json({ message: 'Amount must be positive' });
+    if (sourceType === destType && sourceId === destId) {
+      return res.status(400).json({ message: 'Source and destination must be different' });
+    }
+    // Withdraw from source
+    if (sourceType === 'cash') {
+      if (req.user.cash < amount) return res.status(400).json({ message: 'Insufficient cash balance' });
+      req.user.cash -= amount;
+    } else if (sourceType === 'account') {
+      const sourceAcc = await Account.findOne({ _id: sourceId, user: req.user._id });
+      if (!sourceAcc) return res.status(404).json({ message: 'Source account not found' });
+      if (sourceAcc.balance < amount) return res.status(400).json({ message: 'Insufficient funds in source account' });
+      sourceAcc.balance -= amount;
+      await sourceAcc.save();
+    } else {
+      return res.status(400).json({ message: 'Invalid source type' });
+    }
+    // Deposit to destination
+    if (destType === 'cash') {
+      req.user.cash += amount;
+    } else if (destType === 'account') {
+      const destAcc = await Account.findOne({ _id: destId, user: req.user._id });
+      if (!destAcc) return res.status(404).json({ message: 'Destination account not found' });
+      destAcc.balance += amount;
+      await destAcc.save();
+    } else {
+      return res.status(400).json({ message: 'Invalid destination type' });
+    }
+    await req.user.save();
+    // Log transactions for both sides
+    await Transaction.create({
+      user: req.user._id,
+      amount,
+      type: 'expense',
+      category: sourceType === 'cash' ? 'cash' : 'account',
+      note: `Transfer to ${destType === 'cash' ? 'cash' : 'account'}`,
+      date: new Date(),
+      source: sourceType === 'cash' ? 'cash' : sourceId,
+    });
+    await Transaction.create({
+      user: req.user._id,
+      amount,
+      type: 'income',
+      category: destType === 'cash' ? 'cash' : 'account',
+      note: `Transfer from ${sourceType === 'cash' ? 'cash' : 'account'}`,
+      date: new Date(),
+      source: destType === 'cash' ? 'cash' : destId,
+    });
+    res.json({ message: 'Transfer successful' });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

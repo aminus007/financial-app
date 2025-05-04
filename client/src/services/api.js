@@ -26,6 +26,7 @@ export const auth = {
   addAccount: (data) => api.post('/auth/me/accounts', data),
   deleteAccount: (id) => api.delete(`/auth/me/accounts/${id}`),
   getAccountHistory: (id) => api.get(`/auth/me/accounts/${id}/history`),
+  transfer: (data) => api.post('/auth/me/transfer', data),
 };
 
 // Transactions API
@@ -98,7 +99,7 @@ export const debts = {
   get: (id) => api.get(`/debts/${id}`),
   create: (data) => api.post('/debts', data),
   update: (id, data) => api.patch(`/debts/${id}`, data),
-  pay: (id, amount) => api.post(`/debts/${id}/pay`, { amount }),
+  pay: (id, amount, accountId) => api.post(`/debts/${id}/pay`, { amount, accountId }),
   delete: (id) => api.delete(`/debts/${id}`),
   // Admin endpoints
   getAllAdmin: () => api.get('/debts/admin/all'),
