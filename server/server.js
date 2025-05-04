@@ -66,23 +66,34 @@ cron.schedule('0 1 * * *', async () => {
   const now = new Date();
   const due = await RecurringTransaction.find({ active: true, nextOccurrence: { $lte: now } });
   for (const recur of due) {
-    // Create the actual transaction
-    await Transaction.create({
+    // Check if a transaction already exists for this recurring entry on the same day
+    const startOfDay = new Date(recur.nextOccurrence);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(recur.nextOccurrence);
+    endOfDay.setHours(23, 59, 59, 999);
+    const exists = await Transaction.findOne({
       user: recur.user,
       amount: recur.amount,
       type: recur.type,
       category: recur.category,
-      note: recur.note || '[Recurring]',
-      date: recur.nextOccurrence,
+      date: { $gte: startOfDay, $lte: endOfDay },
     });
+    if (!exists) {
+      // Create the actual transaction
+      await Transaction.create({
+        user: recur.user,
+        amount: recur.amount,
+        type: recur.type,
+        category: recur.category,
+        note: recur.note || '[Recurring]',
+        date: recur.nextOccurrence,
+        source: recur.type === 'expense' ? 'cash' : undefined,
+      });
+    }
     // Calculate next occurrence
     const next = getNextOccurrence(recur.nextOccurrence, recur.frequency);
-    // If endDate is set and next > endDate, deactivate
-    let active = true;
-    if (recur.endDate && next > recur.endDate) active = false;
     await RecurringTransaction.findByIdAndUpdate(recur._id, {
       nextOccurrence: next,
-      active,
     });
   }
   if (due.length) {

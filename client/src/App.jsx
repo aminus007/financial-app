@@ -16,6 +16,7 @@ import Landing from './pages/Landing';
 import SalaryAllocator from './pages/SalaryAllocator';
 import Accounts from './pages/Accounts';
 import Admin from './pages/Admin';
+import Debts from './pages/Debts';
 
 // Components
 import Navbar from './components/Navbar';
@@ -109,6 +110,11 @@ const AppRoutes = () => {
       <Route path="/admin" element={
         <PrivateRoute>
           <Admin />
+        </PrivateRoute>
+      } />
+      <Route path="/debts" element={
+        <PrivateRoute>
+          <Debts />
         </PrivateRoute>
       } />
       <Route path="*" element={<NotFound />} />

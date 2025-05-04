@@ -13,7 +13,6 @@ const RecurringForm = ({ onSuccess, initial }) => {
       note: '',
       frequency: 'monthly',
       startDate: '',
-      endDate: '',
     }
   );
   const queryClient = useQueryClient();
@@ -22,7 +21,7 @@ const RecurringForm = ({ onSuccess, initial }) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries('recurring');
-        setForm({ amount: '', type: 'expense', category: '', note: '', frequency: 'monthly', startDate: '', endDate: '' });
+        setForm({ amount: '', type: 'expense', category: '', note: '', frequency: 'monthly', startDate: '' });
         onSuccess?.();
       },
     }
@@ -71,12 +70,6 @@ const RecurringForm = ({ onSuccess, initial }) => {
         onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
         required
       />
-      <input
-        className="input"
-        type="date"
-        value={form.endDate}
-        onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-      />
       <button className="btn btn-primary" type="submit" disabled={isLoading}>
         {isLoading ? 'Saving...' : (initial ? 'Update' : 'Add')}
       </button>
@@ -107,8 +100,6 @@ const RecurringList = () => {
                 <span className="ml-1">${r.amount.toFixed(2)}</span> —
                 <span className="ml-1">{r.frequency}</span>
                 <span className="ml-1 text-xs text-gray-500">(Next: {r.nextOccurrence?.slice(0, 10)})</span>
-                {r.endDate && <span className="ml-1 text-xs text-gray-400">(Ends: {r.endDate.slice(0, 10)})</span>}
-                {r.note && <span className="ml-2 text-xs text-gray-400">{r.note}</span>}
               </div>
               <div className="flex gap-2">
                 <button className="btn btn-secondary" onClick={() => setEditId(r._id)}>Edit</button>

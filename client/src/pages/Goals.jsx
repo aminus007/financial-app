@@ -105,7 +105,7 @@ const GoalList = () => {
         {goalsList.map((g, idx) => {
           const allocation = allocations.find(a => a.goalId === g._id)?.allocated || 0;
           const progress = Math.min(100, ((g.currentAmount + allocation) / g.targetAmount) * 100);
-          return (
+        return (
             <div
               key={g._id}
               className={`w-72 p-5 rounded-xl shadow-lg bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex flex-col gap-3 border border-gray-200 dark:border-gray-700 transition-all duration-200`}
@@ -114,14 +114,14 @@ const GoalList = () => {
               <div className="flex items-center justify-between mb-1">
                 <span className="font-bold text-lg text-primary-700 dark:text-primary-300 truncate">{g.name}</span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">#{idx + 1}</span>
-              </div>
+            </div>
               {/* Progress Bar */}
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-1">
-                <div
+              <div
                   className="h-3 rounded-full bg-primary-500 transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+                style={{ width: `${progress}%` }}
+              />
+            </div>
               <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-2">
                 <span>Current: <span className="font-semibold">{formatCurrency((g.currentAmount + allocation).toFixed(2), currency)}</span></span>
                 <span>Target: <span className="font-semibold">{formatCurrency(g.targetAmount.toFixed(2), currency)}</span></span>
@@ -136,34 +136,34 @@ const GoalList = () => {
               </div>
               {/* Actions */}
               <div className="flex gap-2 items-center mb-2">
-                <input
+              <input
                   className="input w-20 h-8 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded"
-                  type="number"
-                  min={1}
-                  placeholder="Add funds"
-                  value={addAmount[g._id] || ''}
-                  onChange={e => setAddAmount(a => ({ ...a, [g._id]: e.target.value }))}
-                />
-                <button
+                type="number"
+                min={1}
+                placeholder="Add funds"
+                value={addAmount[g._id] || ''}
+                onChange={e => setAddAmount(a => ({ ...a, [g._id]: e.target.value }))}
+              />
+              <button
                   className="btn btn-primary flex items-center justify-center h-8 w-8 p-0"
-                  onClick={() => {
-                    if (addAmount[g._id] > 0) {
-                      addFunds({ id: g._id, amount: Number(addAmount[g._id]) });
-                      setAddAmount(a => ({ ...a, [g._id]: '' }));
-                    }
-                  }}
+                onClick={() => {
+                  if (addAmount[g._id] > 0) {
+                    addFunds({ id: g._id, amount: Number(addAmount[g._id]) });
+                    setAddAmount(a => ({ ...a, [g._id]: '' }));
+                  }
+                }}
                   title="Add funds"
-                >
+              >
                   <PlusIcon className="h-5 w-5" />
-                </button>
+              </button>
                 <button className="btn btn-secondary flex items-center justify-center h-8 w-8 p-0 ml-auto" onClick={() => deleteGoal(g._id)} title="Delete goal">
                   <TrashIcon className="h-5 w-5 text-red-500" />
-                </button>
-              </div>
+              </button>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
+    </div>
     </>
   );
 };

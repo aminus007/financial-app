@@ -27,6 +27,10 @@ const transactionSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  source: {
+    type: String, // 'cash' or accountId
+    required: function() { return this.type === 'expense'; },
+  },
 }, {
   timestamps: true,
 });

@@ -14,7 +14,7 @@ router.get('/', auth, async (req, res) => {
 // Create a new recurring transaction
 router.post('/', auth, async (req, res) => {
   try {
-    const { amount, type, category, note, frequency, startDate, endDate } = req.body;
+    const { amount, type, category, note, frequency, startDate } = req.body;
     const nextOccurrence = new Date(startDate);
     const recur = await RecurringTransaction.create({
       user: req.user._id,
@@ -24,7 +24,6 @@ router.post('/', auth, async (req, res) => {
       note,
       frequency,
       startDate,
-      endDate,
       nextOccurrence,
     });
     res.status(201).json(recur);

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { format } from 'date-fns';
 import { transactions as transactionsApi } from '../services/api';
 import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
+import { auth as authApi } from '../services/api';
 
 const TRANSACTION_CATEGORIES = {
   income: [
@@ -48,7 +49,11 @@ const TransactionForm = ({ onSuccess }) => {
     category: '',
     note: '',
     date: format(new Date(), 'yyyy-MM-dd'),
+    source: '',
   });
+  const [error, setError] = useState('');
+  const { data: accounts } = useQuery(['user', 'accounts'], authApi.getAccounts);
+  const { user } = useAuth();
 
   const queryClient = useQueryClient();
 
@@ -63,6 +68,7 @@ const TransactionForm = ({ onSuccess }) => {
           category: '',
           note: '',
           date: format(new Date(), 'yyyy-MM-dd'),
+          source: '',
         });
         onSuccess?.();
       },
@@ -71,6 +77,30 @@ const TransactionForm = ({ onSuccess }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError('');
+    if (formData.type === 'expense') {
+      if (!formData.source) {
+        setError('Please select a source for the expense.');
+        return;
+      }
+      const amount = Number(formData.amount);
+      if (formData.source === 'cash') {
+        if ((user?.cash || 0) < amount) {
+          setError('Insufficient cash balance.');
+          return;
+        }
+      } else {
+        const acc = (accounts || []).find(a => a._id === formData.source);
+        if (!acc) {
+          setError('Selected account not found.');
+          return;
+        }
+        if (acc.balance < amount) {
+          setError('Insufficient funds in selected account.');
+          return;
+        }
+      }
+    }
     mutate({
       ...formData,
       amount: Number(formData.amount),
@@ -154,6 +184,29 @@ const TransactionForm = ({ onSuccess }) => {
             required
           />
         </div>
+
+        {formData.type === 'expense' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Source
+            </label>
+            <select
+              name="source"
+              value={formData.source}
+              onChange={handleChange}
+              className="input mt-1"
+              required
+            >
+              <option value="">Select source</option>
+              <option value="cash">Cash ({user?.cash?.toFixed(2) ?? '0.00'})</option>
+              {(accounts || []).map(acc => (
+                <option key={acc._id} value={acc._id}>
+                  {acc.type.charAt(0).toUpperCase() + acc.type.slice(1)} ({acc.balance.toFixed(2)})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <div>
@@ -169,6 +222,8 @@ const TransactionForm = ({ onSuccess }) => {
           placeholder="Add a note"
         />
       </div>
+
+      {error && <div className="text-red-600 text-sm">{error}</div>}
 
       <button
         type="submit"

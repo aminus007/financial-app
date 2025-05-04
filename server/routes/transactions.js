@@ -7,8 +7,8 @@ const { requireAdmin } = require('./auth'); // Import admin middleware
 
 const router = express.Router();
 
-// Get all transactions
-router.get('/', auth, async (req, res) => {
+// Get all transactions (admin only)
+router.get('/', auth, requireAdmin, async (req, res) => {
   try {
     const { type, category, startDate, endDate, sort = '-date' } = req.query;
     
@@ -32,8 +32,8 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get transaction summary
-router.get('/summary', auth, async (req, res) => {
+// Get transaction summary (admin only)
+router.get('/summary', auth, requireAdmin, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
@@ -72,8 +72,8 @@ router.get('/summary', auth, async (req, res) => {
   }
 });
 
-// Get category summary
-router.get('/categories', auth, async (req, res) => {
+// Get category summary (admin only)
+router.get('/categories', auth, requireAdmin, async (req, res) => {
   try {
     const { type, startDate, endDate } = req.query;
     
@@ -103,14 +103,30 @@ router.get('/categories', auth, async (req, res) => {
   }
 });
 
-// Create new transaction
-router.post('/', auth, async (req, res) => {
+// Create new transaction (admin only)
+router.post('/', auth, requireAdmin, async (req, res) => {
   try {
+    const { type, amount, source } = req.body;
+    if (type === 'expense') {
+      if (!source) return res.status(400).json({ message: 'Source (cash or accountId) is required for expenses' });
+      if (source === 'cash') {
+        if (req.user.cash < amount) return res.status(400).json({ message: 'Insufficient cash balance' });
+        req.user.cash -= amount;
+        await req.user.save();
+      } else {
+        // source is accountId
+        const Account = require('../models/Account');
+        const account = await Account.findOne({ _id: source, user: req.user._id });
+        if (!account) return res.status(404).json({ message: 'Account not found' });
+        if (account.balance < amount) return res.status(400).json({ message: 'Insufficient funds in selected account' });
+        account.balance -= amount;
+        await account.save();
+      }
+    }
     const transaction = new Transaction({
       ...req.body,
       user: req.user._id
     });
-
     await transaction.save();
     res.status(201).json(transaction);
   } catch (error) {
@@ -118,8 +134,8 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update transaction
-router.patch('/:id', auth, async (req, res) => {
+// Update transaction (admin only)
+router.patch('/:id', auth, requireAdmin, async (req, res) => {
   try {
     const transaction = await Transaction.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
@@ -137,8 +153,8 @@ router.patch('/:id', auth, async (req, res) => {
   }
 });
 
-// Delete transaction
-router.delete('/:id', auth, async (req, res) => {
+// Delete transaction (admin only)
+router.delete('/:id', auth, requireAdmin, async (req, res) => {
   try {
     const transaction = await Transaction.findOneAndDelete({
       _id: req.params.id,
@@ -155,8 +171,8 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// Generate PDF report of transactions
-router.get('/pdf', auth, async (req, res) => {
+// Generate PDF report of transactions (admin only)
+router.get('/pdf', auth, requireAdmin, async (req, res) => {
   try {
     const { type, category, startDate, endDate } = req.query;
     const query = { user: req.user._id };
@@ -228,8 +244,8 @@ router.get('/pdf', auth, async (req, res) => {
   }
 });
 
-// Top spending categories for a given month/year
-router.get('/top-categories', auth, async (req, res) => {
+// Top spending categories for a given month/year (admin only)
+router.get('/top-categories', auth, requireAdmin, async (req, res) => {
   const { month, year, limit = 3 } = req.query;
   if (!month || !year) return res.status(400).json({ message: 'month and year required' });
   const start = new Date(`${year}-${month}-01`);
@@ -243,8 +259,8 @@ router.get('/top-categories', auth, async (req, res) => {
   res.json(categories);
 });
 
-// Net worth trend (monthly net balance for last N months)
-router.get('/net-worth-trend', auth, async (req, res) => {
+// Net worth trend (monthly net balance for last N months) (admin only)
+router.get('/net-worth-trend', auth, requireAdmin, async (req, res) => {
   const { months = 6 } = req.query;
   const now = new Date();
   const trend = [];

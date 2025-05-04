@@ -31,9 +31,6 @@ const recurringTransactionSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  endDate: {
-    type: Date,
-  },
   nextOccurrence: {
     type: Date,
     required: true,

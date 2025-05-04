@@ -14,6 +14,7 @@ const Navbar = () => {
     { to: '/accounts', label: 'Accounts' },
     { to: '/transactions', label: 'Transactions' },
     { to: '/goals', label: 'Goals' },
+    { to: '/debts', label: 'Debts' },
     { to: '/recurring', label: 'Recurring' },
     { to: '/salary-allocator', label: 'Salary Allocator' },
   ];

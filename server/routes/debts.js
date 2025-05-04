@@ -2,6 +2,8 @@ const express = require('express');
 const Debt = require('../models/Debt');
 const auth = require('../middleware/auth');
 const { requireAdmin } = require('./auth');
+const Account = require('../models/Account');
+const Transaction = require('../models/Transaction');
 
 const router = express.Router();
 
@@ -65,10 +67,29 @@ router.patch('/:id', auth, async (req, res) => {
 // Make a payment toward a debt
 router.post('/:id/pay', auth, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, accountId } = req.body;
+    console.log('Pay debt:', { userId: req.user._id, accountId, amount });
     if (!amount || amount <= 0) return res.status(400).json({ message: 'Amount must be positive' });
+    if (!accountId) return res.status(400).json({ message: 'Account is required' });
     const debt = await Debt.findOne({ _id: req.params.id, user: req.user._id });
     if (!debt) return res.status(404).json({ message: 'Debt not found' });
+    const account = await Account.findOne({ _id: accountId, user: req.user._id });
+    console.log('Found account:', account);
+    if (!account) return res.status(404).json({ message: 'Account not found' });
+    if (account.balance < amount) return res.status(400).json({ message: 'Insufficient funds in selected account' });
+    // Subtract from account
+    account.balance -= amount;
+    await account.save();
+    // Create transaction
+    await Transaction.create({
+      user: req.user._id,
+      amount,
+      type: 'expense',
+      category: 'debt payment',
+      note: `Payment for debt: ${debt.name}`,
+      date: new Date(),
+    });
+    // Update debt
     debt.paidAmount += amount;
     if (debt.paidAmount >= debt.amount) debt.status = 'paid';
     await debt.save();

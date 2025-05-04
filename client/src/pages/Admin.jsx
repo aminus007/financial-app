@@ -147,6 +147,7 @@ const Admin = () => {
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b">
+              <th className="p-2">ID</th>
               <th className="p-2">User</th>
               <th className="p-2">Amount</th>
               <th className="p-2">Type</th>
@@ -158,6 +159,7 @@ const Admin = () => {
           <tbody>
             {transactions.map(t => (
               <tr key={t._id} className="border-b">
+                <td className="p-2 font-mono text-xs">{t._id}</td>
                 <td className="p-2">{t.user?.name || 'N/A'}</td>
                 <td className="p-2">${t.amount.toFixed(2)}</td>
                 <td className="p-2">{t.type}</td>
