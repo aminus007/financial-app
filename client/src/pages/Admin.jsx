@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { admin } from '../services/api';
 import Modal from '../components/Modal';
