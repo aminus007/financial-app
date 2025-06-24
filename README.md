@@ -8,15 +8,17 @@ MindfulMoney is a modern, full-stack personal finance management application tha
 
 - **Dashboard Overview:** Visualize your financial health with charts for income, expenses, net balance, and category breakdowns.
 - **Transaction Management:** Add, edit, delete, and categorize income and expenses. View recent transactions and trends.
+- **Account Transfers:** Transfer funds between accounts and cash with real-time balance updates and transaction logging.
 - **Budget Tracking:** Set monthly category budgets, monitor progress, and get alerts when you approach limits.
 - **Savings Goals:** Create, fund, and track progress toward savings goals with deadlines.
 - **Recurring Transactions:** Automate regular income/expenses (e.g., salary, rent, subscriptions) with flexible scheduling.
 - **Salary Allocator:** Use interactive sliders to apply and customize the 50-30-20 rule (Needs, Savings, Wants) with instant feedback.
-- **Multi-Account Support:** Manage cash, checking, savings, and other accounts.
+- **Multi-Account Support:** Manage cash, checking, savings, and other accounts with individual balance tracking.
 - **Dark Mode:** Seamless light/dark theme toggle.
 - **Responsive Design:** Works great on desktop, tablet, and mobile.
 - **Secure Authentication:** JWT-based login and registration.
 - **PDF Reports:** Export financial summaries as PDF (backend support).
+- **State Management:** Efficient state management with Zustand stores for optimal performance.
 
 ---
 
@@ -29,6 +31,7 @@ MindfulMoney is a modern, full-stack personal finance management application tha
 - Recharts (charts/analytics)
 - Axios (API calls)
 - React Query (data fetching/caching)
+- Zustand (state management)
 - Jest & Testing Library (testing)
 
 **Backend:**
@@ -101,13 +104,31 @@ npm run dev
 1. **Register** a new account with your name and email.
 2. **Login** to access your dashboard.
 3. **Add accounts** (cash, checking, savings, etc.) and set initial balances.
-4. **Record transactions** (income/expense) and categorize them.
-5. **Set budgets** for spending categories and track your progress.
-6. **Create savings goals** and allocate funds toward them.
-7. **Schedule recurring transactions** for regular income/expenses.
-8. **Use the Salary Allocator** to plan your monthly allocations.
-9. **Switch between light/dark mode** as you prefer.
-10. **Export reports** (PDF) for your records (backend support).
+4. **Transfer funds** between accounts and cash using the transfer functionality.
+5. **Record transactions** (income/expense) and categorize them.
+6. **Set budgets** for spending categories and track your progress.
+7. **Create savings goals** and allocate funds toward them.
+8. **Schedule recurring transactions** for regular income/expenses.
+9. **Use the Salary Allocator** to plan your monthly allocations.
+10. **Switch between light/dark mode** as you prefer.
+11. **Export reports** (PDF) for your records (backend support).
+
+### Transfer Functionality
+
+The app now includes a powerful transfer system that allows you to:
+
+- **Transfer between accounts:** Move money from one account to another
+- **Transfer to/from cash:** Convert between cash and account balances
+- **Real-time validation:** Check for sufficient funds before transfers
+- **Transaction logging:** All transfers are logged as separate transactions
+- **Balance updates:** Immediate balance updates across all accounts
+
+To use transfers:
+1. Go to the **Accounts** page
+2. Use the **"Transfer Funds"** section
+3. Select source (From) and destination (To) accounts or cash
+4. Enter the amount
+5. Click **"Transfer"**
 
 ---
 
@@ -120,11 +141,13 @@ financial-app/
 │   │   ├── components/  # Reusable UI components (Navbar, Charts, Modal, etc.)
 │   │   ├── pages/       # Main app pages (Dashboard, Transactions, Budgets, Goals, etc.)
 │   │   ├── services/    # API service layer (axios)
+│   │   ├── store/       # Zustand state management stores
 │   │   └── hooks/       # Custom React hooks
 │   └── ...
 ├── server/              # Express backend
 │   ├── models/          # Mongoose models (User, Transaction, Budget, Goal, etc.)
 │   ├── routes/          # API routes (auth, transactions, budgets, goals, recurring, report)
+│   ├── services/        # Business logic services
 │   ├── middleware/      # Custom middleware (auth, error handling)
 │   └── ...
 └── ...
@@ -134,7 +157,7 @@ financial-app/
 
 ## API Overview
 
-- **Auth:** `/api/auth/register`, `/api/auth/login`, `/api/auth/me`, `/api/auth/preferences`
+- **Auth:** `/api/auth/register`, `/api/auth/login`, `/api/auth/me`, `/api/auth/preferences`, `/api/auth/transfer`
 - **Transactions:** `/api/transactions` (CRUD, summary, categories, top-categories, net-worth-trend)
 - **Budgets:** `/api/budgets` (CRUD, progress)
 - **Goals:** `/api/goals` (CRUD, add funds)
@@ -142,6 +165,25 @@ financial-app/
 - **Reports:** `/api/report` (PDF export)
 
 All endpoints (except registration/login) require a valid JWT token.
+
+### Transfer API
+
+- **POST** `/api/auth/transfer` - Transfer funds between accounts or cash
+  - Body: `{ sourceType, sourceId, destType, destId, amount }`
+  - Returns: Success message and updated balances
+
+---
+
+## Recent Updates
+
+### v2.0.0 - Transfer Functionality & State Management
+- ✅ **Added transfer functionality** between accounts and cash
+- ✅ **Implemented Zustand state management** for better performance
+- ✅ **Fixed zustand v5 compatibility** issues
+- ✅ **Replaced AuthContext** with useAuthStore for consistency
+- ✅ **Added comprehensive service layer** for better code organization
+- ✅ **Enhanced error handling** and validation
+- ✅ **Improved currency formatting** across components
 
 ---
 
@@ -153,6 +195,7 @@ All endpoints (except registration/login) require a valid JWT token.
 - **Extending Categories:** You can add new categories for transactions and budgets as needed.
 - **Scheduled Jobs:** The backend uses `node-cron` to process recurring transactions daily at 1:00 AM.
 - **Error Handling:** The app provides user-friendly error messages and handles token expiration gracefully.
+- **State Management:** The app uses Zustand for efficient state management with automatic re-rendering.
 
 ---
 
@@ -171,5 +214,6 @@ MIT
 **Tested:**  
 - Installation and startup scripts are standard and should work out-of-the-box with Node.js and MongoDB installed.
 - The app uses efficient data fetching (React Query), optimized queries (Mongoose indexes), and modern React patterns for best performance.
+- Transfer functionality has been thoroughly tested with various scenarios including insufficient funds, invalid accounts, and edge cases.
 
 If you need more advanced deployment, Docker, or CI/CD instructions, let me know! 
