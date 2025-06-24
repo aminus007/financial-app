@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { format } from 'date-fns';
 import { transactions as transactionsApi } from '../services/api';
-import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore';
 import { auth as authApi } from '../services/api';
+import useTransactionStore from '../store/useTransactionStore';
 
 const TRANSACTION_CATEGORIES = {
   income: [
@@ -53,7 +54,7 @@ const TransactionForm = ({ onSuccess }) => {
   });
   const [error, setError] = useState('');
   const { data: accounts } = useQuery(['user', 'accounts'], authApi.getAccounts);
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
 
   const queryClient = useQueryClient();
 
@@ -237,8 +238,8 @@ const TransactionForm = ({ onSuccess }) => {
 };
 
 const TransactionList = () => {
-  const { user: authUser } = useAuth();
-  const currency = getPreferredCurrency(authUser);
+  const authUser = useAuthStore((state) => state.user);
+  const currency = authUser?.preferences?.currency || 'USD';
   const [filters, setFilters] = useState({
     type: '',
     category: '',
@@ -246,7 +247,7 @@ const TransactionList = () => {
 
   const { data: transactions, isLoading } = useQuery(
     ['transactions', filters],
-    () => transactionsApi.getAll(filters)
+    () => transactionsApi.getAll(filters).then(res => res.data)
   );
 
   const queryClient = useQueryClient();
@@ -368,6 +369,20 @@ const TransactionList = () => {
 };
 
 const Transactions = () => {
+  const {
+    transactions,
+    loading,
+    error,
+    fetchTransactions,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+  } = useTransactionStore();
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
   return (
     <div className="space-y-8">
       <div className="card">

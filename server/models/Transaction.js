@@ -39,5 +39,6 @@ const transactionSchema = new mongoose.Schema({
 transactionSchema.index({ user: 1, date: -1 });
 transactionSchema.index({ user: 1, type: 1 });
 transactionSchema.index({ user: 1, category: 1 });
+transactionSchema.index({ user: 1, date: 1, type: 1, category: 1 }); // Index for recurring transaction check
 
-module.exports = mongoose.model('Transaction', transactionSchema); 
+module.exports = mongoose.model('Transaction', transactionSchema);

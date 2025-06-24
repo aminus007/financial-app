@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { auth as authApi } from '../services/api';
 import { transactions } from '../services/api';
 import { CurrencyDollarIcon } from '@heroicons/react/24/solid';
-import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore';
 
 // Utility for currency symbol
 const currencySymbols = {
@@ -41,8 +41,8 @@ const SalaryAllocator = () => {
   );
   const [successMsg, setSuccessMsg] = useState('');
 
-  const { user: authUser } = useAuth();
-  const currency = getPreferredCurrency(authUser);
+  const authUser = useAuthStore((state) => state.user);
+  const currency = authUser?.preferences?.currency || 'USD';
 
   // Helper to keep allocations sum to 100 and auto-adjust others
   const handleSlider = (type, value) => {

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { Bars3Icon, XMarkIcon, Cog6ToothIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const [darkMode, toggleDarkMode] = useDarkMode();
   const [mobileOpen, setMobileOpen] = useState(false);
 

@@ -13,9 +13,10 @@ import {
   Cell,
 } from 'recharts';
 import { transactions as transactionsApi, auth as authApi } from '../services/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
-import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore'; // Updated import
+import useBudgetStore from '../store/useBudgetStore';
 
 const monthNames = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -105,8 +106,8 @@ const Dashboard = () => {
   );
   const [editCash, setEditCash] = useState(undefined);
 
-  const { user: authUser } = useAuth();
-  const currency = getPreferredCurrency(authUser);
+  const { user: authUser } = useAuthStore(); // Updated usage
+  const currency = authUser?.preferences?.currency; // Derived currency from store
 
   // Prepare data for monthly spending chart and income vs expenses chart
   const monthlySpendingData = (netWorthTrend || []).map(item => ({
@@ -118,6 +119,11 @@ const Dashboard = () => {
     income: item.income,
     expense: item.expense
   }));
+
+  const { budgets, loading: budgetsLoading, error: budgetsError, fetchBudgets } = useBudgetStore();
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   return (
     <div className="space-y-10 px-2 md:px-8 py-6 max-w-7xl mx-auto">
@@ -255,4 +261,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

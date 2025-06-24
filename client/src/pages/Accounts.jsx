@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { auth as authApi } from '../services/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
+import useAccountStore from '../store/useAccountStore';
 
 const accountTypes = [
   { value: 'checking', label: 'Checking' },
@@ -11,15 +12,19 @@ const accountTypes = [
 
 const Accounts = () => {
   const queryClient = useQueryClient();
-  const { data: accounts } = useQuery(['user', 'accounts'], authApi.getAccounts);
-  const updateAccountMutation = useMutation(
-    ({ id, balance, name }) => authApi.updateAccount(id, { balance, name }),
-    {
-      onSuccess: () => queryClient.invalidateQueries(['user', 'accounts']),
-    }
-  );
-  const [editBalances, setEditBalances] = useState({});
-  const [editNames, setEditNames] = useState({});
+  const {
+    accounts,
+    loading,
+    error,
+    fetchAccounts,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+  } = useAccountStore();
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   const { data: user, refetch: refetchUser } = useQuery(['user', 'profile'], authApi.getProfile);
   const updateCashMutation = useMutation(
@@ -40,11 +45,6 @@ const Accounts = () => {
       queryClient.invalidateQueries(['user', 'accounts']);
       setNewAccount({ type: 'checking', balance: '' });
     },
-  });
-
-  // Delete account
-  const deleteAccountMutation = useMutation(authApi.deleteAccount, {
-    onSuccess: () => queryClient.invalidateQueries(['user', 'accounts']),
   });
 
   // Account history modal
@@ -213,45 +213,21 @@ const Accounts = () => {
                     type="text"
                     className="input w-32"
                     placeholder="Account Name"
-                    value={editNames[acc._id] !== undefined ? editNames[acc._id] : acc.name || ''}
-                    onChange={e => setEditNames(n => ({ ...n, [acc._id]: e.target.value }))}
-                    onBlur={() => {
-                      if (editNames[acc._id] !== undefined && editNames[acc._id] !== acc.name) {
-                        updateAccountMutation.mutate({ id: acc._id, name: editNames[acc._id] });
-                        setEditNames(n => ({ ...n, [acc._id]: undefined }));
-                      }
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.target.blur();
-                      }
-                    }}
+                    value={acc.name || ''}
+                    onChange={e => updateAccount({ id: acc._id, name: e.target.value })}
                   />
                 )}
                 <input
                   type="number"
                   className="input w-28"
-                  value={editBalances[acc._id] !== undefined ? editBalances[acc._id] : acc.balance}
-                  onChange={e => setEditBalances(b => ({ ...b, [acc._id]: e.target.value }))}
+                  value={acc.balance}
+                  onChange={e => updateAccount({ id: acc._id, balance: parseFloat(e.target.value) })}
                   min="0"
                   step="0.01"
                 />
-                {editBalances[acc._id] !== undefined && parseFloat(editBalances[acc._id]) !== acc.balance && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => {
-                      updateAccountMutation.mutate({ id: acc._id, balance: parseFloat(editBalances[acc._id]) });
-                      setEditBalances(b => ({ ...b, [acc._id]: undefined }));
-                    }}
-                    disabled={updateAccountMutation.isLoading}
-                  >
-                    Save
-                  </button>
-                )}
                 <button
                   className="btn btn-danger btn-sm"
-                  onClick={() => deleteAccountMutation.mutate(acc._id)}
-                  disabled={deleteAccountMutation.isLoading}
+                  onClick={() => deleteAccount(acc._id)}
                 >
                   Delete
                 </button>

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { debts } from '../services/api';
 import { auth } from '../services/api';
 import { PlusIcon, PencilIcon, TrashIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import useDebtStore from '../store/useDebtStore';
 
 function formatDate(date) {
   if (!date) return '-';
@@ -119,29 +120,26 @@ const DebtCard = ({ debt, onEdit, onDelete, onPay }) => {
 };
 
 const Debts = () => {
-  const queryClient = useQueryClient();
-  const { data: debtsList, isLoading } = useQuery('debts', debts.getAll);
-  const { mutate: createDebt } = useMutation(debts.create, {
-    onSuccess: () => queryClient.invalidateQueries('debts'),
-  });
-  const { mutate: updateDebt } = useMutation((args) => debts.update(args.id, args.data), {
-    onSuccess: () => queryClient.invalidateQueries('debts'),
-  });
-  const { mutate: deleteDebt } = useMutation(debts.delete, {
-    onSuccess: () => queryClient.invalidateQueries('debts'),
-  });
-  const { mutate: payDebt } = useMutation(
-    ({ id, amount, accountId }) => debts.pay(id, amount, accountId),
-    {
-      onSuccess: () => queryClient.invalidateQueries('debts'),
-    }
-  );
+  const {
+    debts,
+    loading,
+    error,
+    fetchDebts,
+    addDebt,
+    updateDebt,
+    deleteDebt,
+    payDebt,
+  } = useDebtStore();
 
   const [showForm, setShowForm] = useState(false);
   const [editDebt, setEditDebt] = useState(null);
   const [payDebtId, setPayDebtId] = useState(null);
 
-  if (isLoading) return <div>Loading...</div>;
+  useEffect(() => {
+    fetchDebts();
+  }, [fetchDebts]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="space-y-8">
@@ -156,9 +154,9 @@ const Debts = () => {
               initial={editDebt}
               onSave={data => {
                 if (editDebt) {
-                  updateDebt({ id: editDebt._id, data });
+                  updateDebt(data);
                 } else {
-                  createDebt(data);
+                  addDebt(data);
                 }
                 setShowForm(false);
                 setEditDebt(null);
@@ -172,9 +170,9 @@ const Debts = () => {
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-xl w-full max-w-md">
             <PayForm
-              max={Math.max(0, debtsList.find(d => d._id === payDebtId)?.amount - debtsList.find(d => d._id === payDebtId)?.paidAmount)}
+              max={Math.max(0, debts.find(d => d._id === payDebtId)?.amount - debts.find(d => d._id === payDebtId)?.paidAmount)}
               onPay={(amount, accountId) => {
-                payDebt({ id: payDebtId, amount, accountId });
+                payDebt(payDebtId, amount, accountId);
                 setPayDebtId(null);
               }}
               onCancel={() => setPayDebtId(null)}
@@ -182,14 +180,14 @@ const Debts = () => {
           </div>
         </div>
       )}
-      {(!debtsList || debtsList.length === 0) ? (
+      {(!debts || debts.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
           <span className="text-5xl mb-4">💸</span>
           <span className="text-lg">You have no debts. Add your first debt to start tracking!</span>
         </div>
       ) : (
         <div className="flex flex-wrap gap-6">
-          {debtsList.map(debt => (
+          {debts.map(debt => (
             <DebtCard
               key={debt._id}
               debt={debt}

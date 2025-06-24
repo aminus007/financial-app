@@ -5,106 +5,30 @@ const auth = require('../middleware/auth');
 const Account = require('../models/Account');
 const Goal = require('../models/Goal');
 const Transaction = require('../models/Transaction');
+const authService = require('../services/authService');
 
 const router = express.Router();
 
 // Register new user
-router.post('/register', async (req, res) => {
+router.post('/register', async (req, res, next) => {
   try {
-    const { name, email, accounts = [], cash = 0, isAdmin = false } = req.body;
-
-    // Check if user already exists by email or name
-    let user = await User.findOne({ $or: [{ email }, { name }] });
-    if (user) {
-      return res.status(400).json({ message: 'User with this email or name already exists' });
-    }
-
-    // Create new user with cash, email, and isAdmin
-    user = new User({ name, email, cash, isAdmin });
-    await user.save();
-
-    // Create accounts and log initial transactions
-    let hasSavings = false;
-    for (const acc of accounts) {
-      if (acc.type === 'savings') hasSavings = true;
-      const accountDoc = await Account.create({
-        user: user._id,
-        type: acc.type,
-        balance: acc.balance,
-      });
-      // Log initial transaction for this account
-      if (acc.balance && acc.balance > 0) {
-        await Transaction.create({
-          user: user._id,
-          amount: acc.balance,
-          type: 'income',
-          category: acc.type,
-          note: 'Initial balance',
-          date: new Date(),
-        });
-      }
-    }
-
-    // Log initial cash as a transaction
-    if (cash && cash > 0) {
-      await Transaction.create({
-        user: user._id,
-        amount: cash,
-        type: 'income',
-        category: 'cash',
-        note: 'Initial cash balance',
-        date: new Date(),
-      });
-    }
-
-    // If savings account exists and no savings goal, log as 'free savings'
-    if (hasSavings) {
-      const existingGoal = await Goal.findOne({ user: user._id, name: 'Savings' });
-      if (!existingGoal) {
-        // Create a 'free savings' goal with 0 target and the balance will be tracked as free
-        await Goal.create({
-          user: user._id,
-          name: 'Free Savings',
-          targetAmount: 0,
-          currentAmount: 0,
-        });
-      }
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({ user, token });
+    const result = await authService.registerUser(req.body);
+    res.status(201).json(result);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    next(error);
   }
 });
 
 // Login user
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   try {
-    const { name } = req.body;
-
-    // Find user
-    const user = await User.findOne({ name });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({ user, token });
+    console.log('Attempting login for user:', req.body.name); // Added logging
+    const result = await authService.loginUser(req.body);
+    console.log('Login successful for user:', req.body.name); // Added logging
+    res.json(result);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Login error:', error.message); // Added logging
+    next(error);
   }
 });
 
@@ -114,29 +38,20 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // Update user preferences
-router.patch('/preferences', auth, async (req, res) => {
+router.patch('/preferences', auth, async (req, res, next) => {
   try {
-    const { currency } = req.body;
-    
-    req.user.preferences = {
-      ...req.user.preferences,
-      ...(currency && { currency }),
-    };
-
-    await req.user.save();
-    res.json(req.user);
+    const user = await authService.updatePreferences(req.user, req.body);
+    res.json(user);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    next(error);
   }
 });
 
 // Get user's net balance
 router.get('/me/netbalance', auth, async (req, res) => {
   try {
-    const accounts = await Account.find({ user: req.user._id });
-    const accountsTotal = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
-    const netBalance = accountsTotal + (req.user.cash || 0);
-    res.json({ netBalance });
+    const result = await authService.getNetBalance(req.user._id);
+    res.json(result);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -145,7 +60,7 @@ router.get('/me/netbalance', auth, async (req, res) => {
 // Get all accounts for the user
 router.get('/me/accounts', auth, async (req, res) => {
   try {
-    const accounts = await Account.find({ user: req.user._id });
+    const accounts = await authService.getUserAccounts(req.user._id);
     res.json(accounts);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -155,12 +70,7 @@ router.get('/me/accounts', auth, async (req, res) => {
 // Update an account's balance or name (if checking)
 router.patch('/me/accounts/:id', auth, async (req, res) => {
   try {
-    const { balance, name } = req.body;
-    const account = await Account.findOne({ _id: req.params.id, user: req.user._id });
-    if (!account) return res.status(404).json({ message: 'Account not found' });
-    if (balance !== undefined) account.balance = balance;
-    if (name !== undefined && account.type === 'checking') account.name = name;
-    await account.save();
+    const account = await authService.updateAccount(req.user._id, req.params.id, req.body);
     res.json(account);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -170,38 +80,20 @@ router.patch('/me/accounts/:id', auth, async (req, res) => {
 // Update user's cash
 router.patch('/me/cash', auth, async (req, res) => {
   try {
-    const { cash } = req.body;
-    req.user.cash = cash;
-    await req.user.save();
-    res.json(req.user);
+    const user = await authService.updateUserCash(req.user, req.body.cash);
+    res.json(user);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
 // Add a new account
-router.post('/me/accounts', auth, async (req, res) => {
+router.post('/me/accounts', auth, async (req, res, next) => {
   try {
-    const { type, balance } = req.body;
-    const account = await Account.create({
-      user: req.user._id,
-      type,
-      balance: balance || 0,
-    });
-    // Log initial transaction if balance > 0
-    if (balance && balance > 0) {
-      await Transaction.create({
-        user: req.user._id,
-        amount: balance,
-        type: 'income',
-        category: type,
-        note: 'Initial balance',
-        date: new Date(),
-      });
-    }
+    const account = await authService.addAccount(req.user._id, req.body);
     res.status(201).json(account);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    next(error);
   }
 });
 

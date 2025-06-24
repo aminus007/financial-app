@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { admin } from '../services/api';
 import Modal from '../components/Modal';
+import useAuthStore from '../store/useAuthStore';
 
 const TransactionEditForm = ({ transaction, accounts, onSave, onCancel }) => {
   const [form, setForm] = React.useState({ ...transaction });
@@ -68,7 +69,7 @@ const TransactionEditForm = ({ transaction, accounts, onSave, onCancel }) => {
 };
 
 const Admin = () => {
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
   console.log('Admin page user:', user);
   const [users, setUsers] = useState([]);
   const [transactions, setTransactions] = useState([]);

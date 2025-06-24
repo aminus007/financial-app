@@ -37,4 +37,6 @@ const debtSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-module.exports = mongoose.model('Debt', debtSchema); 
+debtSchema.index({ user: 1 });
+
+module.exports = mongoose.model('Debt', debtSchema);

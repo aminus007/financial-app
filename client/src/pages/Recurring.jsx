@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { recurring } from '../services/api';
+import useRecurringStore from '../store/useRecurringStore';
 
 const frequencies = ['daily', 'weekly', 'monthly', 'yearly'];
 
@@ -77,6 +78,19 @@ const RecurringForm = ({ onSuccess, initial }) => {
   );
 };
 
+const checkAndApplyTransaction = (transaction) => {
+  // Logic to check if the transaction has been acted upon
+  // For demonstration, let's assume we check a field 'acted' in the transaction
+  if (!transaction.acted) {
+    // Apply the transaction logic here
+    console.log(`Applying transaction for ${transaction.category}`);
+    // Update the transaction as acted
+    // This would typically involve a backend call to update the transaction status
+  } else {
+    console.log(`Transaction for ${transaction.category} already acted upon.`);
+  }
+};
+
 const RecurringList = () => {
   const { data, isLoading } = useQuery('recurring', recurring.getAll);
   const queryClient = useQueryClient();
@@ -104,6 +118,7 @@ const RecurringList = () => {
               <div className="flex gap-2">
                 <button className="btn btn-secondary" onClick={() => setEditId(r._id)}>Edit</button>
                 <button className="btn btn-secondary" onClick={() => deleteRec(r._id)}>Delete</button>
+                <button className="btn btn-secondary" onClick={() => checkAndApplyTransaction(r)}>Check & Apply</button>
               </div>
             </div>
           )}
@@ -113,14 +128,30 @@ const RecurringList = () => {
   );
 };
 
-const Recurring = () => (
-  <div className="space-y-8">
-    <div className="card">
-      <h2 className="text-2xl font-bold mb-4">Recurring Transactions</h2>
-      <RecurringForm />
-      <RecurringList />
+const Recurring = () => {
+  const {
+    recurring,
+    loading,
+    error,
+    fetchRecurring,
+    addRecurring,
+    updateRecurring,
+    deleteRecurring,
+  } = useRecurringStore();
+
+  useEffect(() => {
+    fetchRecurring();
+  }, [fetchRecurring]);
+
+  return (
+    <div className="space-y-8">
+      <div className="card">
+        <h2 className="text-2xl font-bold mb-4">Recurring Transactions</h2>
+        <RecurringForm />
+        <RecurringList />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Recurring; 

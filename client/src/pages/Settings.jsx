@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore';
 
 const Settings = () => {
-  const { user, updatePreferences } = useAuth();
+  const user = useAuthStore((state) => state.user);
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -28,7 +28,7 @@ const Settings = () => {
     setLoading(true);
     try {
       // Only update preferences for now (name, currency)
-      await updatePreferences({
+      await useAuthStore.getState().updatePreferences({
         currency: form.currency,
       });
       setSuccess('Preferences updated!');

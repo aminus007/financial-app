@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/useAuthStore';
 
 const Login = () => {
-  const { login } = useAuth();
+  const loginStore = useAuthStore((state) => state.login);
   const [form, setForm] = useState({
     name: '',
   });
@@ -24,7 +24,15 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const user = await login({ name: form.name });
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: form.name }),
+      });
+      if (!response.ok) throw new Error('Login failed');
+      const { user, token } = await response.json();
+      localStorage.setItem('token', token);
+      loginStore(user, token);
       if (user.isAdmin) {
         navigate('/admin', { replace: true });
       } else {

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { goals, auth } from '../services/api';
 import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { useAuth, getPreferredCurrency } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore';
+import useGoalStore from '../store/useGoalStore';
 
 // Utility for currency symbol
 const currencySymbols = {
@@ -72,8 +73,8 @@ const GoalForm = ({ onSuccess }) => {
 const GoalList = () => {
   const { data: goalsList, isLoading } = useQuery('goals', goals.getAll);
   const { data: accounts, isLoading: accountsLoading } = useQuery('accounts', auth.getAccounts);
-  const { user: authUser } = useAuth();
-  const currency = getPreferredCurrency(authUser);
+  const authUser = useAuthStore((state) => state.user);
+  const currency = authUser?.preferences?.currency || 'USD';
   const savingsAccount = accounts?.find(acc => acc.type === 'savings');
   const savingsBalance = savingsAccount?.balance || 0;
   const queryClient = useQueryClient();
@@ -168,14 +169,38 @@ const GoalList = () => {
   );
 };
 
-const Goals = () => (
-  <div className="space-y-8">
-    <div className="card">
-      <h2 className="text-2xl font-bold mb-4">Savings Goals</h2>
-      <GoalForm />
-      <GoalList />
+const Goals = () => {
+  const {
+    goals,
+    loading,
+    error,
+    fetchGoals,
+    addGoal,
+    updateGoal,
+    deleteGoal,
+    addFunds,
+  } = useGoalStore();
+
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
+
+  // Replace useQuery/useMutation logic with store actions
+  // Example: handleAdd, handleUpdate, handleDelete, handleAddFunds
+  // ...
+
+  // Render goals, loading, error, etc.
+  // ...
+
+  return (
+    <div className="space-y-8">
+      <div className="card">
+        <h2 className="text-2xl font-bold mb-4">Savings Goals</h2>
+        <GoalForm />
+        <GoalList />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Goals; 

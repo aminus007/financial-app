@@ -7,6 +7,10 @@ const cron = require('node-cron');
 const RecurringTransaction = require('./models/RecurringTransaction');
 const Transaction = require('./models/Transaction');
 const Account = require('./models/Account');
+const config = require('./config');
+
+console.log('MONGO_URI loaded:', config.mongoUri ? 'Yes' : 'No'); // Added logging
+console.log('JWT_SECRET loaded:', config.jwtSecret ? 'Yes' : 'No'); // Added logging
 
 const { router: authRoutes } = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
@@ -23,7 +27,7 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(config.mongoUri)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -37,7 +41,7 @@ app.use('/api/report', reportRouter);
 app.use('/api/debts', debtsRoutes);
 
 // Serve static files in production
-if (process.env.NODE_ENV === 'production') {
+if (config.nodeEnv === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
   
   app.get('*', (req, res) => {
@@ -104,10 +108,15 @@ cron.schedule('0 1 * * *', async () => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    message: err.message || 'Something went wrong!',
+    code: status,
+    details: err.details || undefined,
+  });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = config.port;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

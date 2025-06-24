@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import useAuthStore from '../store/useAuthStore';
 
 const accountTypes = [
   { value: 'checking', label: 'Checking' },
@@ -9,7 +9,8 @@ const accountTypes = [
 ];
 
 const Register = () => {
-  const { register } = useAuth();
+  const loginStore = useAuthStore((state) => state.login);
+  const { register } = useAuthStore.getState();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -55,13 +56,17 @@ const Register = () => {
     setError('');
     setLoading(true);
     try {
-      await register({
+      // Use the auth API service for registration
+      const { user, token } = await register({
         name: formData.name,
         email: formData.email,
         accounts: formData.accounts,
         cash: parseFloat(formData.cash) || 0,
       });
+      localStorage.setItem('token', token);
+      loginStore(user, token); // Update auth store state
     } catch (err) {
+      // Error handling from API service
       setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
