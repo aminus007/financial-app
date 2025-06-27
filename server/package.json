@@ -15,8 +15,10 @@
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.29.4",
     "mongoose": "^8.2.1",
+    "multer": "^2.0.1",
     "node-cron": "^3.0.3",
-    "pdfkit": "^0.13.0"
+    "pdfkit": "^0.13.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

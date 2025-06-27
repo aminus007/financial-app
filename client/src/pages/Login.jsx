@@ -6,6 +6,7 @@ const Login = () => {
   const loginStore = useAuthStore((state) => state.login);
   const [form, setForm] = useState({
     name: '',
+    password: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,7 @@ const Login = () => {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name }),
+        body: JSON.stringify({ name: form.name, password: form.password }),
       });
       if (!response.ok) throw new Error('Login failed');
       const { user, token } = await response.json();
@@ -70,6 +71,19 @@ const Login = () => {
                 className="input"
                 placeholder="Full name"
                 value={form.name}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="input"
+                placeholder="Password"
+                value={form.password}
                 onChange={handleChange}
               />
             </div>

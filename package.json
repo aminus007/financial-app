@@ -18,9 +18,11 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "canvas-confetti": "^1.9.3",
     "framer-motion": "^12.7.4",
     "gsap": "^3.12.7",
+    "lucide-react": "^0.523.0",
     "react-countup": "^6.5.3",
     "zustand": "^5.0.5"
   }

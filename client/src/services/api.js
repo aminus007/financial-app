@@ -19,6 +19,7 @@ export const auth = {
   login: (data) => api.post('/auth/login', data),
   getProfile: () => api.get('/auth/me'),
   updatePreferences: (data) => api.patch('/auth/preferences', data),
+  changePassword: (data) => api.patch('/auth/change-password', data),
   getNetBalance: () => api.get('/auth/me/netbalance'),
   getAccounts: () => api.get('/auth/me/accounts'),
   updateAccount: (id, data) => api.patch(`/auth/me/accounts/${id}`, data),
@@ -64,6 +65,7 @@ export const recurring = {
   create: (data) => api.post('/recurring', data),
   update: (id, data) => api.patch(`/recurring/${id}`, data),
   delete: (id) => api.delete(`/recurring/${id}`),
+  process: () => api.post('/recurring/process'),
 };
 
 // Admin API
@@ -72,6 +74,8 @@ export const admin = {
   getUsers: () => api.get('/auth/admin/users'),
   updateUser: (id, data) => api.patch(`/auth/admin/users/${id}`, data),
   deleteUser: (id) => api.delete(`/auth/admin/users/${id}`),
+  resetUserPassword: (id, newPassword) => api.patch(`/auth/admin/users/${id}/reset-password`, { newPassword }),
+  generatePassword: () => api.get('/auth/admin/generate-password'),
   // Transactions
   getTransactions: () => api.get('/transactions/admin/all'),
   updateTransaction: (id, data) => api.patch(`/transactions/admin/${id}`, data),
@@ -105,6 +109,18 @@ export const debts = {
   getAllAdmin: () => api.get('/debts/admin/all'),
   updateAdmin: (id, data) => api.patch(`/debts/admin/${id}`, data),
   deleteAdmin: (id) => api.delete(`/debts/admin/${id}`),
+};
+
+// Data Import/Export API
+export const data = {
+  import: (formData) => api.post('/data/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
+  export: () => api.get('/data/export', {
+    responseType: 'blob',
+  }),
 };
 
 // Error handler

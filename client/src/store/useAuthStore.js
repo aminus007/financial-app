@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { auth as authApi } from '../services/api';
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -16,6 +17,16 @@ const useAuthStore = create((set) => ({
       return { user, token };
     } catch (error) {
       throw new Error(error.message || 'Registration failed');
+    }
+  },
+  // Update user preferences
+  updatePreferences: async (preferences) => {
+    try {
+      const updatedUser = await authApi.updatePreferences(preferences);
+      set((state) => ({ ...state, user: updatedUser }));
+      return updatedUser;
+    } catch (error) {
+      throw new Error(error.message || 'Failed to update preferences');
     }
   },
 }));

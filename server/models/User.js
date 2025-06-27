@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     unique: true,
   },
+  password: {
+    type: String,
+    required: [true, 'Password is required'],
+    minlength: 8,
+  },
   preferences: {
     currency: {
       type: String,

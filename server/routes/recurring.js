@@ -3,7 +3,6 @@ const RecurringTransaction = require('../models/RecurringTransaction');
 const auth = require('../middleware/auth');
 const { requireAdmin } = require('./auth'); // Import admin middleware
 const recurringService = require('../services/recurringService');
-const { logRecurringTransaction } = require('../services/transactionService');
 
 const router = express.Router();
 
@@ -77,28 +76,30 @@ router.delete('/admin/:id', auth, requireAdmin, async (req, res, next) => {
   }
 });
 
-const processRecurringTransactions = async () => {
-  const now = new Date();
-  const recurringTransactions = await RecurringTransaction.find({
-    nextOccurrence: { $lte: now },
-    active: true,
-  });
-
-  for (const recurring of recurringTransactions) {
-    await logRecurringTransaction(recurring);
-
-    // Update the next occurrence based on the frequency
-    recurring.nextOccurrence = new Date(recurring.nextOccurrence);
-    if (recurring.frequency === 'monthly') {
-      recurring.nextOccurrence.setMonth(recurring.nextOccurrence.getMonth() + 1);
-    }
-    // Handle other frequencies (daily, weekly, yearly) similarly
-
-    await recurring.save();
+// Process recurring transactions for the current user
+router.post('/process', auth, async (req, res, next) => {
+  try {
+    const results = await recurringService.processUserRecurringTransactions(req.user._id);
+    res.json({
+      message: `Processed ${results.processed} recurring transactions`,
+      results
+    });
+  } catch (error) {
+    next(error);
   }
-};
+});
 
-// Call this function at appropriate intervals (e.g., via a cron job or on server start)
-// processRecurringTransactions();
+// Process all recurring transactions (admin only)
+router.post('/admin/process-all', auth, requireAdmin, async (req, res, next) => {
+  try {
+    const results = await recurringService.processDueRecurringTransactions();
+    res.json({
+      message: `Processed ${results.processed} recurring transactions across all users`,
+      results
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router; 

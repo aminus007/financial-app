@@ -19,6 +19,7 @@ const goalRoutes = require('./routes/goals');
 const recurringRoutes = require('./routes/recurring');
 const reportRouter = require('./routes/report');
 const debtsRoutes = require('./routes/debts');
+const dataRoutes = require('./routes/data');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/goals', goalRoutes);
 app.use('/api/recurring', recurringRoutes);
 app.use('/api/report', reportRouter);
 app.use('/api/debts', debtsRoutes);
+app.use('/api/data', dataRoutes);
 
 // Serve static files in production
 if (config.nodeEnv === 'production') {

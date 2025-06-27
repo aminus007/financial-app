@@ -1,21 +1,32 @@
+console.log('Loading authService.js'); // Log at the very beginning of the file
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Account = require('../models/Account');
 const Goal = require('../models/Goal');
 const Transaction = require('../models/Transaction');
 const config = require('../config');
+const bcrypt = require('bcryptjs');
 
 // Register new user
 const registerUser = async (data) => {
-  const { name, email, accounts = [], cash = 0, isAdmin = false } = data;
+  console.log('Attempting to register user...'); // Log start of function
+  console.log('Registering user with data:', data); // Log input data
+  const { name, email, password, accounts = [], cash = 0, isAdmin = false } = data;
+  if (!password || password.length < 8) throw new Error('Password must be at least 8 characters');
+  console.log('Attempting password hashing...'); // Log before hashing
+  const hashedPassword = await bcrypt.hash(password, 10);
+  console.log('Password hashed'); // Log after hashing
+  console.log('Attempting to check for existing user...'); // Log before user check
   // Check if user already exists by email or name
   let user = await User.findOne({ $or: [{ email }, { name }] });
+  console.log('Existing user check result:', user); // Log existing user check result
   if (user) {
     throw new Error('User with this email or name already exists');
   }
   // Create new user
-  user = new User({ name, email, cash, isAdmin });
+  user = new User({ name, email, password: hashedPassword, cash, isAdmin });
   await user.save();
+  console.log('New user saved:', user._id); // Log after saving user
   // Create accounts and log initial transactions
   let hasSavings = false;
   for (const acc of accounts) {
@@ -25,6 +36,7 @@ const registerUser = async (data) => {
       type: acc.type,
       balance: acc.balance,
     });
+    console.log('Account created:', accountDoc._id); // Log after creating account
     // Log initial transaction for this account
     if (acc.balance && acc.balance > 0) {
       await Transaction.create({
@@ -35,6 +47,7 @@ const registerUser = async (data) => {
         note: 'Initial balance',
         date: new Date(),
       });
+      console.log('Initial account transaction logged'); // Log after logging account transaction
     }
   }
   // Log initial cash as a transaction
@@ -47,6 +60,7 @@ const registerUser = async (data) => {
       note: 'Initial cash balance',
       date: new Date(),
     });
+    console.log('Initial cash transaction logged'); // Log after logging cash transaction
   }
   // If savings account exists and no savings goal, log as 'free savings'
   if (hasSavings) {
@@ -58,6 +72,7 @@ const registerUser = async (data) => {
         targetAmount: 0,
         currentAmount: 0,
       });
+      console.log('Free Savings goal created'); // Log after creating goal
     }
   }
   // Generate token
@@ -66,26 +81,23 @@ const registerUser = async (data) => {
     config.jwtSecret,
     { expiresIn: '7d' }
   );
+  console.log('JWT token generated'); // Log after token generation
   return { user, token };
 };
 
 // Login user
 const loginUser = async (data) => {
   console.log('Inside loginUser service function with data:', data); // Added logging
-  const { name } = data;
-  console.log('Searching for user with name:', name); // Added logging
+  const { name, password } = data;
   const user = await User.findOne({ name });
-  if (!user) {
-    console.log('User not found for name:', name); // Added logging
-    throw new Error('Invalid credentials');
-  }
-  console.log('User found:', user.name); // Added logging
+  if (!user) throw new Error('Invalid credentials');
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) throw new Error('Invalid credentials');
   const token = jwt.sign(
     { userId: user._id, isAdmin: user.isAdmin },
     config.jwtSecret,
     { expiresIn: '7d' }
   );
-  console.log('Token generated successfully'); // Added logging
   return { user, token };
 };
 
@@ -154,6 +166,91 @@ const addAccount = async (userId, data) => {
   return account;
 };
 
+// Change user password
+const changePassword = async (userId, data) => {
+  const { currentPassword, newPassword } = data;
+  
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error('New password must be at least 8 characters');
+  }
+  
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  // Verify current password
+  const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isCurrentPasswordValid) {
+    throw new Error('Current password is incorrect');
+  }
+  
+  // Hash new password
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+  
+  // Update password
+  user.password = hashedNewPassword;
+  await user.save();
+  
+  return { message: 'Password changed successfully' };
+};
+
+// Generate a generic password
+const generateGenericPassword = () => {
+  const length = 12;
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  let password = '';
+  
+  // Ensure at least one of each required character type
+  password += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)]; // uppercase
+  password += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)]; // lowercase
+  password += '0123456789'[Math.floor(Math.random() * 10)]; // number
+  password += '!@#$%^&*'[Math.floor(Math.random() * 8)]; // special char
+  
+  // Fill the rest randomly
+  for (let i = 4; i < length; i++) {
+    password += charset[Math.floor(Math.random() * charset.length)];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+};
+
+// Admin reset user password
+const adminResetPassword = async (adminUserId, targetUserId, newPassword = null) => {
+  // Verify admin permissions
+  const admin = await User.findById(adminUserId);
+  if (!admin || !admin.isAdmin) {
+    throw new Error('Admin access required');
+  }
+  
+  // Find target user
+  const targetUser = await User.findById(targetUserId);
+  if (!targetUser) {
+    throw new Error('User not found');
+  }
+  
+  // Generate password if not provided
+  const passwordToSet = newPassword || generateGenericPassword();
+  
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(passwordToSet, 10);
+  
+  // Update user password
+  targetUser.password = hashedPassword;
+  await targetUser.save();
+  
+  return {
+    message: 'Password reset successfully',
+    newPassword: passwordToSet, // Return the plain password for admin to share
+    user: {
+      id: targetUser._id,
+      name: targetUser.name,
+      email: targetUser.email,
+    },
+  };
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -163,4 +260,7 @@ module.exports = {
   updateAccount,
   updateUserCash,
   addAccount,
-}; 
+  changePassword,
+  generateGenericPassword,
+  adminResetPassword,
+};

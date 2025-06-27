@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { admin } from '../services/api';
 import Modal from '../components/Modal';
 import useAuthStore from '../store/useAuthStore';
+import { Key, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
 
 const TransactionEditForm = ({ transaction, accounts, onSave, onCancel }) => {
   const [form, setForm] = React.useState({ ...transaction });
@@ -79,6 +80,12 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editTx, setEditTx] = useState(null);
+  const [resetPasswordModal, setResetPasswordModal] = useState(null);
+  const [generatedPassword, setGeneratedPassword] = useState('');
+  const [customPassword, setCustomPassword] = useState('');
+  const [showCustomPassword, setShowCustomPassword] = useState(false);
+  const [useCustomPassword, setUseCustomPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   // Fetch all admin data
   useEffect(() => {
@@ -163,6 +170,46 @@ const Admin = () => {
     }
   };
 
+  // Password reset handlers
+  const handleGeneratePassword = async () => {
+    try {
+      const { password } = await admin.generatePassword();
+      setGeneratedPassword(password);
+      setUseCustomPassword(false);
+    } catch (err) {
+      alert('Failed to generate password');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordModal) return;
+    
+    const passwordToUse = useCustomPassword ? customPassword : generatedPassword;
+    if (!passwordToUse) {
+      alert('Please generate a password or enter a custom one');
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const result = await admin.resetUserPassword(resetPasswordModal._id, passwordToUse);
+      alert(`Password reset successfully!\n\nNew password: ${result.newPassword}\n\nPlease share this password securely with the user.`);
+      setResetPasswordModal(null);
+      setGeneratedPassword('');
+      setCustomPassword('');
+      setUseCustomPassword(false);
+    } catch (err) {
+      alert(err.message || 'Failed to reset password');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Password copied to clipboard!');
+  };
+
   if (!user || !user.isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -196,6 +243,10 @@ const Admin = () => {
                 <td className="p-2 space-x-2">
                   <button className="btn btn-xs btn-secondary" onClick={() => handlePromote(u._id, u.isAdmin)}>
                     {u.isAdmin ? 'Demote' : 'Promote'}
+                  </button>
+                  <button className="btn btn-xs btn-secondary" onClick={() => setResetPasswordModal(u)}>
+                    <Key size={12} className="mr-1" />
+                    Reset Password
                   </button>
                   <button className="btn btn-xs btn-danger" onClick={() => handleDeleteUser(u._id)}>
                     Delete
@@ -370,6 +421,106 @@ const Admin = () => {
           </tbody>
         </table>
       </section>
+      {/* Password Reset Modal */}
+      {resetPasswordModal && (
+        <Modal onClose={() => setResetPasswordModal(null)}>
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Key size={20} /> Reset Password for {resetPasswordModal.name}
+            </h3>
+            
+            <div className="space-y-4">
+              {/* Generate Password Option */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={!useCustomPassword}
+                      onChange={() => setUseCustomPassword(false)}
+                      className="mr-2"
+                    />
+                    Generate Generic Password
+                  </label>
+                  <button
+                    onClick={handleGeneratePassword}
+                    className="btn btn-xs btn-secondary flex items-center gap-1"
+                    disabled={resettingPassword}
+                  >
+                    <RefreshCw size={12} />
+                    Generate
+                  </button>
+                </div>
+                {generatedPassword && (
+                  <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                    <code className="flex-1 font-mono text-sm">{generatedPassword}</code>
+                    <button
+                      onClick={() => copyToClipboard(generatedPassword)}
+                      className="btn btn-xs btn-secondary"
+                      title="Copy to clipboard"
+                    >
+                      <Copy size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Custom Password Option */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={useCustomPassword}
+                      onChange={() => setUseCustomPassword(true)}
+                      className="mr-2"
+                    />
+                    Set Custom Password
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showCustomPassword ? 'text' : 'password'}
+                    value={customPassword}
+                    onChange={(e) => setCustomPassword(e.target.value)}
+                    placeholder="Enter custom password"
+                    className="input pr-10"
+                    disabled={!useCustomPassword || resettingPassword}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-2.5 text-gray-400"
+                    onClick={() => setShowCustomPassword(!showCustomPassword)}
+                    disabled={!useCustomPassword}
+                  >
+                    {showCustomPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Must be at least 8 characters with uppercase, lowercase, number, and special character
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-4">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setResetPasswordModal(null)}
+                disabled={resettingPassword}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary flex items-center gap-2"
+                onClick={handleResetPassword}
+                disabled={resettingPassword}
+              >
+                {resettingPassword ? 'Resetting...' : 'Reset Password'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

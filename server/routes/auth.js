@@ -47,6 +47,16 @@ router.patch('/preferences', auth, async (req, res, next) => {
   }
 });
 
+// Change password
+router.patch('/change-password', auth, async (req, res, next) => {
+  try {
+    const result = await authService.changePassword(req.user._id, req.body);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get user's net balance
 router.get('/me/netbalance', auth, async (req, res) => {
   try {
@@ -230,6 +240,27 @@ router.get('/admin/accounts', auth, requireAdmin, async (req, res) => {
     res.json(accounts);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin generate generic password
+router.get('/admin/generate-password', auth, requireAdmin, async (req, res, next) => {
+  try {
+    const password = authService.generateGenericPassword();
+    res.json({ password });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Admin reset user password
+router.patch('/admin/users/:id/reset-password', auth, requireAdmin, async (req, res, next) => {
+  try {
+    const { newPassword } = req.body;
+    const result = await authService.adminResetPassword(req.user._id, req.params.id, newPassword);
+    res.json(result);
+  } catch (error) {
+    next(error);
   }
 });
 
