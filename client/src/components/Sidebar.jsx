@@ -26,6 +26,18 @@ const Sidebar = () => {
   const [darkMode, toggleDarkMode] = useDarkMode();
   const { isExpanded, setIsExpanded, isMobile, setIsMobile } = useSidebar();
   const location = useLocation();
+  const [hovered, setHovered] = useState(false);
+
+  // Only auto-expand/collapse on desktop
+  const handleMouseEnter = () => {
+    if (!isMobile && !isExpanded) setHovered(true);
+  };
+  const handleMouseLeave = () => {
+    if (!isMobile && hovered) setHovered(false);
+  };
+
+  // The sidebar is expanded if either isExpanded (manual) or hovered (auto)
+  const expanded = isExpanded || hovered;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -53,7 +65,7 @@ const Sidebar = () => {
     { to: '/transactions', label: 'Transactions', icon: CreditCardIcon },
     { to: '/goals', label: 'Goals', icon: FlagIcon },
     { to: '/debts', label: 'Debts', icon: ExclamationTriangleIcon },
-    { to: '/recurring', label: 'Recurring', icon: ArrowPathIcon },
+    { to: '/recurring', label: 'Scheduled Transactions', icon: ArrowPathIcon },
     { to: '/salary-allocator', label: 'Salary Allocator', icon: CalculatorIcon },
   ];
 
@@ -62,7 +74,7 @@ const Sidebar = () => {
   return (
     <>
       {/* Mobile Overlay */}
-      {isExpanded && isMobile && (
+      {expanded && isMobile && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden sidebar-overlay opacity-100"
           onClick={() => setIsExpanded(false)}
@@ -72,16 +84,19 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div className={`
         fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-lg z-50 sidebar-transition
-        ${isExpanded ? 'w-64' : 'w-16'} 
+        ${expanded ? 'w-64' : 'w-16'} 
         ${isMobile ? 'sidebar-expand' : ''}
-        ${isMobile && !isExpanded ? '-translate-x-full' : ''}
-      `}>
+        ${isMobile && !expanded ? '-translate-x-full' : ''}
+      `}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
           {/* Logo */}
           <div className="flex items-center overflow-hidden">
-            {isExpanded ? (
+            {expanded ? (
               <span className="text-xl font-bold text-primary-600 dark:text-primary-400 sidebar-transition opacity-100">
                 MindfulMoney
               </span>
@@ -97,7 +112,7 @@ const Sidebar = () => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 sidebar-transition flex-shrink-0 btn-hover"
           >
-            {isExpanded ? (
+            {expanded ? (
               <XMarkIcon className="h-5 w-5 text-gray-600 dark:text-gray-300 icon-spin" />
             ) : (
               <Bars3Icon className="h-5 w-5 text-gray-600 dark:text-gray-300 icon-spin" />
@@ -122,12 +137,12 @@ const Sidebar = () => {
                 `}
               >
                 <Icon className="h-5 w-5 flex-shrink-0 icon-spin" />
-                {isExpanded && (
+                {expanded && (
                   <span className="ml-3 font-medium sidebar-transition opacity-100">
                     {link.label}
                   </span>
                 )}
-                {!isExpanded && (
+                {!expanded && (
                   <div className="tooltip">
                     {link.label}
                   </div>
@@ -149,12 +164,12 @@ const Sidebar = () => {
               `}
             >
               <UserIcon className="h-5 w-5 flex-shrink-0 icon-spin" />
-              {isExpanded && (
+              {expanded && (
                 <span className="ml-3 font-medium sidebar-transition opacity-100">
                   Admin
                 </span>
               )}
-              {!isExpanded && (
+              {!expanded && (
                 <div className="tooltip">
                   Admin
                 </div>
@@ -175,7 +190,7 @@ const Sidebar = () => {
             ) : (
               <SunIcon className="h-5 w-5 flex-shrink-0 icon-spin" />
             )}
-            {isExpanded && (
+            {expanded && (
               <span className="ml-3 font-medium sidebar-transition opacity-100">
                 {darkMode ? 'Dark Mode' : 'Light Mode'}
               </span>
@@ -197,7 +212,7 @@ const Sidebar = () => {
                 `}
               >
                 <Cog6ToothIcon className="h-5 w-5 flex-shrink-0 icon-spin" />
-                {isExpanded && (
+                {expanded && (
                   <span className="ml-3 font-medium sidebar-transition opacity-100">
                     Settings
                   </span>
@@ -206,7 +221,7 @@ const Sidebar = () => {
 
               {/* User Info */}
               <div className="px-3 py-2">
-                {isExpanded ? (
+                {expanded ? (
                   <div className="text-sm text-gray-600 dark:text-gray-400 sidebar-transition opacity-100">
                     <div className="font-medium text-gray-800 dark:text-gray-200">
                       {user.name}
@@ -228,7 +243,7 @@ const Sidebar = () => {
                 className="w-full flex items-center px-3 py-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 sidebar-transition btn-hover"
               >
                 <ArrowLeftOnRectangleIcon className="h-5 w-5 flex-shrink-0 icon-spin" />
-                {isExpanded && (
+                {expanded && (
                   <span className="ml-3 font-medium sidebar-transition opacity-100">
                     Logout
                   </span>
@@ -242,7 +257,7 @@ const Sidebar = () => {
                 className="w-full flex items-center px-3 py-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 sidebar-transition btn-hover"
               >
                 <ArrowLeftOnRectangleIcon className="h-5 w-5 flex-shrink-0 icon-spin" />
-                {isExpanded && (
+                {expanded && (
                   <span className="ml-3 font-medium sidebar-transition opacity-100">
                     Login
                   </span>
