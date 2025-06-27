@@ -64,7 +64,7 @@ const Sidebar = () => {
       {/* Mobile Overlay */}
       {isExpanded && isMobile && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden sidebar-overlay"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden sidebar-overlay opacity-100"
           onClick={() => setIsExpanded(false)}
         />
       )}

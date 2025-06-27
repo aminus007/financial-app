@@ -43,7 +43,7 @@
   }
 
   .sidebar-overlay {
-    @apply animate-in fade-in duration-200;
+    @apply transition-opacity duration-200 ease-in-out;
   }
 
   /* Tooltip animations */
