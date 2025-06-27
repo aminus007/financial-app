@@ -32,4 +32,37 @@
   .nav-link {
     @apply text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 rounded;
   }
+
+  /* Sidebar animations */
+  .sidebar-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .sidebar-expand {
+    @apply transform transition-transform duration-300 ease-in-out;
+  }
+
+  .sidebar-overlay {
+    @apply animate-in fade-in duration-200;
+  }
+
+  /* Tooltip animations */
+  .tooltip {
+    @apply absolute left-16 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50;
+  }
+
+  /* Content slide animations */
+  .content-slide {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Button hover effects */
+  .btn-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:scale-105;
+  }
+
+  /* Icon animations */
+  .icon-spin {
+    @apply transition-transform duration-200 hover:rotate-12;
+  }
 } 
