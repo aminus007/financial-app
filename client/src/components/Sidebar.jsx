@@ -82,12 +82,13 @@ const Sidebar = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`
-        fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-lg z-50 sidebar-transition
-        ${expanded ? 'w-64' : 'w-16'} 
-        ${isMobile ? 'sidebar-expand' : ''}
-        ${isMobile && !expanded ? '-translate-x-full' : ''}
-      `}
+      <div
+        className={`
+          fixed top-0 left-0 h-full sidebar-glass z-50 sidebar-transition
+          ${expanded ? 'w-64' : 'w-16'}
+          ${isMobile ? 'sidebar-expand' : ''}
+          ${isMobile && !expanded ? '-translate-x-full' : ''}
+        `}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >

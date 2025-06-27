@@ -65,4 +65,10 @@
   .icon-spin {
     @apply transition-transform duration-200 hover:rotate-12;
   }
+
+  .sidebar-glass {
+    @apply bg-white/70 dark:bg-gray-800/60 backdrop-blur-md shadow-lg;
+    /* Optional: border for extra glassy look */
+    border-right: 1.5px solid rgba(255,255,255,0.18);
+  }
 } 
