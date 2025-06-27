@@ -132,7 +132,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-10 px-2 md:px-8 py-6 max-w-7xl mx-auto">
-      {/* Currency Selector is now in Settings. Currency is global. */}
       {/* Month/Year Selectors */}
       <div className="flex flex-wrap gap-4 items-center mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <label className="mr-2 font-medium">Month:</label>
@@ -166,7 +165,7 @@ const Dashboard = () => {
           <p className={`mt-2 text-3xl font-bold ${(netBalanceData?.netBalance || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatCurrency(netBalanceData?.netBalance?.toFixed(2) || '0.00', currency)}</p>
         </div>
       </div>
-      {/* Charts Section */}
+      {/* Main Analytics: Income vs Expenses & Daily Expenses */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Income vs Expenses Line Chart (monthly) */}
         <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
@@ -199,6 +198,9 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+      {/* Category Analytics: Expenses by Category & Top Spending Categories */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         {/* Expenses by Category Pie Chart (filtered) */}
         <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Expenses by Category</h3>
@@ -239,43 +241,24 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
-      {/* Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         {/* Top Categories (filtered) */}
         <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Top Spending Categories ({monthNames[selectedMonth]} {selectedYear})</h3>
           <ul className="space-y-2">
             {topCategories?.length ? topCategories.map((cat, i) => (
               <li key={cat._id} className="flex justify-between border-b pb-1 last:border-b-0">
-                <span>{i + 1}. {cat._id}</span>
-                <span className="font-bold text-red-600 dark:text-red-400">{formatCurrency(cat.total.toFixed(2), currency)}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">{cat._id}</span>
+                <span className="text-gray-500 dark:text-gray-400">{formatCurrency(cat.total.toFixed(2), currency)}</span>
               </li>
-            )) : <li>No data</li>}
+            )) : (
+              <li className="text-gray-500 dark:text-gray-400">No data</li>
+            )}
           </ul>
         </div>
-        {/* Net Worth Trend (last 6 months) */}
-        <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Net Worth Trend (Last 6 Months)</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={netWorthTrend || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tickFormatter={m => monthNames[m]} />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="net" stroke="#0ea5e9" strokeWidth={2} name="Net" />
-                <Line type="monotone" dataKey="income" stroke="#10B981" strokeWidth={2} name="Income" />
-                <Line type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} name="Expense" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
-      {/* Monthly Spending Trend Chart */}
-      <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6 mt-10">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Monthly Spending Trend</h3>
-        <MonthlySpendingChart data={monthlySpendingData} />
+      {/* (Optional) Monthly Spending Chart at the bottom */}
+      <div className="mt-10">
+        <MonthlySpendingChart data={monthlySpendingData} currency={currency} />
       </div>
     </div>
   );
