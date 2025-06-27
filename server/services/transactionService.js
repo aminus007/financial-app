@@ -306,6 +306,29 @@ const logRecurringTransaction = async (recurringTransaction) => {
   await transaction.save();
 };
 
+// Service function to get daily expenses for a user
+const getDailyExpenses = async (userId, { startDate, endDate }) => {
+  const query = { user: userId, type: 'expense' };
+  if (startDate || endDate) {
+    query.date = {};
+    if (startDate) query.date.$gte = new Date(startDate);
+    if (endDate) query.date.$lte = new Date(endDate);
+  }
+  // Group by date (YYYY-MM-DD)
+  const daily = await Transaction.aggregate([
+    { $match: query },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+        total: { $sum: '$amount' }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+  // Return as [{ date, total }]
+  return daily.map(d => ({ date: d._id, total: d.total }));
+};
+
 module.exports = {
   getAllTransactions,
   getTransactionSummary,
@@ -320,4 +343,5 @@ module.exports = {
   adminUpdateTransaction,
   adminDeleteTransaction,
   logRecurringTransaction,
+  getDailyExpenses,
 };

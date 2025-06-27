@@ -125,6 +125,11 @@ const Dashboard = () => {
     fetchBudgets();
   }, [fetchBudgets]);
 
+  // Daily expenses for the last 30 days
+  const { data: dailyExpenses } = useQuery(['transactions', 'daily-expenses'], () =>
+    transactionsApi.getDailyExpenses({})
+  );
+
   return (
     <div className="space-y-10 px-2 md:px-8 py-6 max-w-7xl mx-auto">
       {/* Currency Selector is now in Settings. Currency is global. */}
@@ -175,6 +180,21 @@ const Dashboard = () => {
                 <Tooltip />
                 <Line type="monotone" dataKey="income" stroke="#10B981" strokeWidth={2} />
                 <Line type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        {/* Daily Expenses Line Chart */}
+        <div className="card bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Daily Expenses (Last 30 Days)</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={dailyExpenses || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tickFormatter={d => d?.slice(5)} />
+                <YAxis />
+                <Tooltip formatter={v => formatCurrency(v.toFixed(2), currency)} />
+                <Line type="monotone" dataKey="total" stroke="#EF4444" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

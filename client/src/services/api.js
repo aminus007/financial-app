@@ -40,6 +40,7 @@ export const transactions = {
   delete: (id) => api.delete(`/transactions/${id}`),
   getTopCategories: (params) => api.get('/transactions/top-categories', { params }),
   getNetWorthTrend: (params) => api.get('/transactions/net-worth-trend', { params }),
+  getDailyExpenses: (params) => api.get('/transactions/daily-expenses', { params }),
 };
 
 // Budgets API

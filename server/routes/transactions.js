@@ -144,4 +144,15 @@ router.delete('/admin/:id', auth, requireAdmin, async (req, res) => {
   }
 });
 
+// Get daily expenses (admin only)
+router.get('/daily-expenses', auth, requireAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const data = await transactionService.getDailyExpenses(req.user._id, { startDate, endDate });
+    res.json(data);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 module.exports = router; 
